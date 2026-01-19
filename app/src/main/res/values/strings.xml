@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">3D View App</string>
+    <string name="welcome">Welcome to</string>
+    <string name="app_title">3D Cloth Collection</string>
+    <string name="search_hint">Search products...</string>
+    <string name="categories">Categories</string>
+    <string name="browse_categories">Browse by category</string>
+    <string name="tshirts">T-Shirts</string>
+    <string name="shirts">Shirts</string>
+    <string name="pants">Pants</string>
+    <string name="recent_products">Recent Products</string>
+    <string name="view_all">View All</string>
+    <string name="no_products">No products found</string>
+    <string name="try_search">Try searching for something else</string>
+    <string name="add_to_cart">Add to Cart</string>
+    <string name="loading">Loading...</string>
+    <string name="error_network">Network Error</string>
+    <string name="error_api">API Error</string>
+    <string name="select_model">Select Model</string>
+    <string name="male">Male</string>
+    <string name="female">Female</string>
+    <string name="select_color">Select Color</string>
+    <string name="zoom_in">Zoom In</string>
+    <string name="zoom_out">Zoom Out</string>
+    <string name="reset">Reset</string>
+    <string name="model_viewer">3D Model Viewer</string>
+    <string name="using_sketchfab">Using Sketchfab Embed</string>
+    <string name="load_demo_model">Load Demo Model</string>
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="primary">#6200EE</color>
+    <color name="primary_dark">#3700B3</color>
+    <color name="primary_light">#BB86FC</color>
+    <color name="purple_200">#3700B3</color>
+    <color name="purple_500">#BB86FC</color>
+
+
+    <!-- Secondary Colors -->
+    <color name="secondary">#03DAC5</color>
+    <color name="secondary_dark">#018786</color>
+
+    <!-- Background Colors -->
+    <color name="background">#F8F9FA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="error">#CF6679</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    <color name="text_on_secondary">#000000</color>
+    <color name="black">#000000</color>
+
+    <!-- Border Colors -->
+    <color name="border">#E0E0E0</color>
+    <color name="border_light">#F5F5F5</color>
+</resources>

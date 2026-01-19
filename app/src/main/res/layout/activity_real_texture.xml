@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#668374">
+
+    <!-- 3D વ્યૂ માટે ફ્રેગમેન્ટ કન્ટેનર -->
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- મોડલ બદલવાનું બટન -->
+    <Button
+        android:id="@+id/btnChangeModel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:padding="15dp"
+        android:text="Change Model"
+        android:textColor="#FFFFFF"
+        android:background="#4CAF50"
+        android:visibility="gone"
+        android:elevation="8dp" />
+
+    <!-- લોડિંગ ઇન્ડિકેટર (વૈકલ્પિક) -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+</RelativeLayout>
