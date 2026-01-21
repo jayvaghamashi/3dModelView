@@ -1,7 +1,6 @@
 package com.example.a3dviewapp.adapter;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +10,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.a3dviewapp.R;
-import com.example.a3dviewapp.RealTextureActivity;
 import com.example.a3dviewapp.model.Product;
 import com.example.a3dviewapp.utils.ImageLoader;
 import java.util.HashMap;
@@ -52,7 +50,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         holder.productTitle.setText(product.getTitle());
         holder.productId.setText("ID: " + product.getId());
 
-        // List view ma khali preview image dekhadva mate
+        // Load preview image
         ImageLoader.getInstance(context).loadImage(product.getImageUrl(), holder.productImage);
 
         // Favorite icon setup
@@ -64,25 +62,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         // --- PRODUCT CLICK LOGIC ---
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
+                // Only call the listener. The Activity will handle opening the intent.
                 listener.onProductClick(product);
-
-                // RealTextureActivity open karvi
-                Intent intent = new Intent(context, RealTextureActivity.class);
-                intent.putExtra("product_name", product.getTitle());
-
-                // --- MUKHYA SUDHARO ---
-                // T-shirt texture mate 'image' (preview) pehla check karvu ke 'files' (template) available che ke nahi.
-                // Jo product model ma files list hoy, to original texture pass karvu.
-                if (product.getFiles() != null && !product.getFiles().isEmpty()) {
-                    intent.putExtra("product_image", product.getFiles().get(0).getUrl());
-                } else {
-                    intent.putExtra("product_image", product.getImageUrl());
-                }
-
-                intent.putExtra("product_id", product.getId());
-                intent.putExtra("product_type", product.getType());
-
-                context.startActivity(intent);
             }
         });
 

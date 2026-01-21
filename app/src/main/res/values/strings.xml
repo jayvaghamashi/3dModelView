@@ -1,29 +1,64 @@
 <resources>
     <string name="app_name">3D View App</string>
-    <string name="welcome">Welcome to</string>
-    <string name="app_title">3D Cloth Collection</string>
-    <string name="search_hint">Search products...</string>
+    <string name="app_title">3D View Shop</string>
+    <string name="welcome">Welcome Back!</string>
     <string name="categories">Categories</string>
     <string name="browse_categories">Browse by category</string>
+    <string name="recent_products">Recent Products</string>
+    <string name="try_search">Try searching for products</string>
+
     <string name="tshirts">T-Shirts</string>
     <string name="shirts">Shirts</string>
     <string name="pants">Pants</string>
-    <string name="recent_products">Recent Products</string>
+
+    <string name="title_tshirts">T-Shirts List</string>
+    <string name="title_shirts">Shirts List</string>
+    <string name="title_pants">Pants List</string>
     <string name="view_all">View All</string>
+    <string name="search_hint">Search products...</string>
     <string name="no_products">No products found</string>
-    <string name="try_search">Try searching for something else</string>
-    <string name="add_to_cart">Add to Cart</string>
-    <string name="loading">Loading...</string>
-    <string name="error_network">Network Error</string>
-    <string name="error_api">API Error</string>
-    <string name="select_model">Select Model</string>
-    <string name="male">Male</string>
-    <string name="female">Female</string>
-    <string name="select_color">Select Color</string>
-    <string name="zoom_in">Zoom In</string>
-    <string name="zoom_out">Zoom Out</string>
-    <string name="reset">Reset</string>
-    <string name="model_viewer">3D Model Viewer</string>
-    <string name="using_sketchfab">Using Sketchfab Embed</string>
-    <string name="load_demo_model">Load Demo Model</string>
+
+    <string name="alert_dialog_title">Select Model</string>
+    <string name="alert_dialog_main_title">Main Menu</string>
+    <string name="alert_dialog_help_title">Help &amp; Info</string>
+    <string name="alert_dialog_repository">Choose Repository</string>
+    <string name="alert_dialog_load_title">Loading Model...</string>
+
+    <string name="help_text">
+        3D View Controls:\n
+        - One finger: Rotate the model\n
+        - Two fingers pinch: Zoom In/Out\n
+        - Two fingers drag: Move model (Pan)\n
+        - Double tap: Reset view
+    </string>
+
+    <string name="about_text">
+        3D View App v1.0\n
+        Powered by 3Deer Model Engine.\n
+        Developed for 3D Product Visualization.
+    </string>
+
+    <string-array name="dialog_menu_items">
+        <item>Load New Model</item>
+        <item>Help</item>
+        <item>About App</item>
+        <item>Exit</item>
+    </string-array>
+
+    <string-array name="dialog_help_items">
+        <item>Demos</item>
+        <item>Controls Help</item>
+        <item>About</item>
+    </string-array>
+
+    <string-array name="dialog_load_items">
+        <item>Local Samples (Assets)</item>
+        <item>The3Deer Online Repo</item>
+        <item>Khronos glTF Samples</item>
+        <item>System File Picker</item>
+        <item>SD Card Explorer</item>
+    </string-array>
+
+    <string name="error_loading_model">Error loading 3D model. Please try again.</string>
+    <string name="network_error">Network error. Check your connection.</string>
 </resources>

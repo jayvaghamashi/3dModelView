@@ -1,945 +1,435 @@
 package org.the3deer.android_3d_model_engine.services.collada;
 
-
-
-import android.graphics.Bitmap;
-
-import android.graphics.BitmapFactory;
-
-import android.graphics.Canvas;
-
-import android.graphics.Color;
-
-import android.graphics.Rect;
-
 import android.opengl.GLES20;
-
 import android.util.Log;
-
-
 
 import androidx.annotation.NonNull;
 
-
-
 import org.the3deer.android_3d_model_engine.animation.Animation;
-
 import org.the3deer.android_3d_model_engine.model.AnimatedModel;
-
 import org.the3deer.android_3d_model_engine.model.Constants;
-
 import org.the3deer.android_3d_model_engine.model.Element;
-
 import org.the3deer.android_3d_model_engine.model.Object3DData;
-
-import org.the3deer.android_3d_model_engine.model.Texture;
-
 import org.the3deer.android_3d_model_engine.services.LoadListener;
-
 import org.the3deer.android_3d_model_engine.services.collada.entities.JointData;
-
 import org.the3deer.android_3d_model_engine.services.collada.entities.MeshData;
-
 import org.the3deer.android_3d_model_engine.services.collada.entities.SkeletonData;
-
 import org.the3deer.android_3d_model_engine.services.collada.entities.SkinningData;
-
 import org.the3deer.android_3d_model_engine.services.collada.loader.AnimationLoader;
-
 import org.the3deer.android_3d_model_engine.services.collada.loader.GeometryLoader;
-
 import org.the3deer.android_3d_model_engine.services.collada.loader.MaterialLoader;
-
 import org.the3deer.android_3d_model_engine.services.collada.loader.SkeletonLoader;
-
 import org.the3deer.android_3d_model_engine.services.collada.loader.SkinLoader;
-
 import org.the3deer.util.android.ContentUtils;
-
 import org.the3deer.util.io.IOUtils;
-
 import org.the3deer.util.xml.XmlNode;
-
 import org.the3deer.util.xml.XmlParser;
 
-
-
-import java.io.ByteArrayOutputStream;
-
 import java.io.InputStream;
-
 import java.net.URI;
-
 import java.util.ArrayList;
-
 import java.util.Arrays;
-
 import java.util.Collections;
-
 import java.util.List;
-
 import java.util.Map;
-
-
 
 public final class ColladaLoader {
 
-
-
-    // Enums for Mapping Logic
-
-    private enum Part { BODY, LEFT_ARM, RIGHT_ARM, LEFT_LEG, RIGHT_LEG }
-
-    private enum Side { FRONT, BACK, LEFT, RIGHT, UP, DOWN }
-
-
-
+    /**
+     * @param is file stream
+     * @return all the texture files found in the file
+     */
     public static List<String> getImages(InputStream is) {
-
         try {
-
             final XmlNode xml = XmlParser.parse(is);
-
             return new MaterialLoader(xml.getChild("library_materials"),
-
                     xml.getChild("library_effects"), xml.getChild("library_images")).getImages();
-
         } catch (Exception ex) {
-
             Log.e("ColladaLoaderTask", "Error loading materials", ex);
-
             return null;
-
         }
-
     }
 
-
-
     @NonNull
-
     public List<Object3DData> load(URI uri, LoadListener callback) {
-
         final List<Object3DData> ret = new ArrayList<>();
-
         final List<MeshData> allMeshes = new ArrayList<>();
-
-
 
         try (InputStream is = ContentUtils.getInputStream(uri)) {
 
-
-
             Log.i("ColladaLoaderTask", "Parsing file... " + uri.toString());
-
             callback.onProgress("Loading file...");
-
             final XmlNode xml = XmlParser.parse(is);
 
-
-
+            // get authoring tool
             String authoring_tool = null;
-
             try {
-
                 XmlNode child = xml.getChild("asset").getChild("contributor").getChild("authoring_tool");
-
                 authoring_tool = child.getData();
+                Log.i("ColladaLoaderTask","authoring_tool: "+ authoring_tool);
+            } catch (Exception e) {
+                // ignore
+            }
 
-            } catch (Exception e) { }
-
-
-
-            // Visual Scene
-
+            // load visual scene
+            // we need this first in order to progressively load geometries with it's binded transform
+            Log.i("ColladaLoaderTask", "--------------------------------------------------");
             Log.i("ColladaLoaderTask", "Loading visual nodes...");
-
+            Log.i("ColladaLoaderTask", "--------------------------------------------------");
+            callback.onProgress("Loading visual nodes...");
             Map<String, SkeletonData> skeletons = null;
-
             try {
-
+                // load joints
                 SkeletonLoader jointsLoader = new SkeletonLoader(xml);
-
                 skeletons = jointsLoader.loadJoints();
 
             } catch (Exception ex) {
-
                 Log.e("ColladaLoaderTask", "Error loading visual scene", ex);
-
             }
 
 
-
-            // Geometries
-
+            // load geometries
+            Log.i("ColladaLoaderTask", "--------------------------------------------------");
             Log.i("ColladaLoaderTask", "Loading geometries...");
-
+            Log.i("ColladaLoaderTask", "--------------------------------------------------");
+            callback.onProgress("Loading geometries...");
             List<MeshData> meshDatas = null;
-
             try {
-
                 GeometryLoader g = new GeometryLoader(xml.getChild("library_geometries"));
-
                 List<XmlNode> geometries = xml.getChild("library_geometries").getChildren("geometry");
-
                 meshDatas = new ArrayList<>();
-
                 for (int i = 0; i < geometries.size(); i++) {
 
+                    // alert user if loading several meshes
+                    if (geometries.size() > 1) {
+                        callback.onProgress("Loading geometries... " + (i + 1) + " / " + geometries.size());
+                    }
+
+                    // load next mesh
                     XmlNode geometry = geometries.get(i);
-
                     MeshData meshData = g.loadGeometry(geometry);
-
                     if (meshData == null) continue;
-
                     meshDatas.add(meshData);
-
                     allMeshes.add(meshData);
 
-
-
+                    // create 3D Model
                     AnimatedModel data3D = new AnimatedModel(meshData.getVertexBuffer(), null);
-
                     data3D.setAuthoringTool(authoring_tool);
-
                     data3D.setMeshData(meshData);
-
                     data3D.setId(meshData.getId());
-
                     data3D.setVertexBuffer(meshData.getVertexBuffer());
-
                     data3D.setNormalsBuffer(meshData.getNormalsBuffer());
-
                     data3D.setColorsBuffer(meshData.getColorsBuffer());
-
                     data3D.setElements(meshData.getElements());
-
+                    //data3D.setDimensions(meshData.getDimension());
                     data3D.setDrawMode(GLES20.GL_TRIANGLES);
-
                     data3D.setDrawUsingArrays(false);
 
-
-
+                    // bind transform
                     if (skeletons != null) {
 
+                        // TODO: we may have several instances - should be clone all of them here?
+
                         JointData jointData = null;
-
                         SkeletonData skeletonData = skeletons.get(meshData.getId());
-
-                        if (skeletonData == null) skeletonData = skeletons.get("default");
-
-                        if (skeletonData != null) jointData = skeletonData.find(meshData.getId());
-
-                        if (jointData != null) {
-
-                            data3D.setName(jointData.getName());
-
-                            data3D.setBindTransform(jointData.getBindTransform());
-
+                        if (skeletonData == null) {
+                            skeletonData = skeletons.get("default");
                         }
-
+                        if (skeletonData != null) {
+                            jointData = skeletonData.find(meshData.getId());
+                        }
+                        if (jointData != null) {
+                            Log.d("ColladaLoaderTask", "Mesh joint found. id: "+jointData.getName()+", bindTransform: "+ Arrays.toString(jointData.getBindTransform()));
+                            data3D.setName(jointData.getName());
+                            data3D.setBindTransform(jointData.getBindTransform());
+                        }
                     }
 
                     callback.onLoad(data3D);
-
                     ret.add(data3D);
-
                 }
-
             } catch (Exception ex) {
-
                 Log.e("ColladaLoaderTask", "Error loading geometries", ex);
-
                 return Collections.emptyList();
-
             }
 
-
-
-            // Materials
-
+            // load materials
+            Log.i("ColladaLoaderTask", "--------------------------------------------------");
             Log.i("ColladaLoaderTask", "Loading materials...");
-
+            Log.i("ColladaLoaderTask", "--------------------------------------------------");
+            callback.onProgress("Loading materials...");
             try {
-
                 final MaterialLoader materialLoader = new MaterialLoader(xml.getChild("library_materials"),
-
                         xml.getChild("library_effects"), xml.getChild("library_images"));
-
                 for (int i = 0; i < meshDatas.size(); i++) {
-
                     final MeshData meshData = meshDatas.get(i);
-
                     final Object3DData data3D = ret.get(i);
 
+                    // load material for mesh
                     materialLoader.loadMaterial(meshData);
-
                     data3D.setTextureBuffer(meshData.getTextureBuffer());
-
                 }
-
             } catch (Exception ex) {
-
                 Log.e("ColladaLoaderTask", "Error loading materials", ex);
-
             }
 
 
-
-            // Visual Scene binding
-
+            // load visual scene
+            Log.i("ColladaLoaderTask", "--------------------------------------------------");
+            Log.i("ColladaLoaderTask", "Loading visual scene...");
+            Log.i("ColladaLoaderTask", "--------------------------------------------------");
+            callback.onProgress("Loading visual scene...");
+            //SkeletonData jointsData = null;
             try {
+                // load joints
+                //SkeletonLoader jointsLoader = new SkeletonLoader(xml);
+                //jointsData = jointsLoader.loadJoints();
 
+                // bind instance materials
                 final MaterialLoader materialLoader = new MaterialLoader(xml.getChild("library_materials"),
-
                         xml.getChild("library_effects"), xml.getChild("library_images"));
-
                 for (int i = 0; i < meshDatas.size(); i++) {
-
                     final MeshData meshData = meshDatas.get(i);
+                    final Object3DData data3D = ret.get(i);
 
                     SkeletonData skeletonData = skeletons.get(meshData.getId());
-
-                    if (skeletonData == null) skeletonData = skeletons.get("default");
-
+                    if (skeletonData == null) {
+                        skeletonData = skeletons.get("default");
+                    }
                     materialLoader.loadMaterialFromVisualScene(meshData, skeletonData);
-
                 }
 
+                // bind instance geometries
 
+                // log event
+                Log.d("ColladaLoaderTask", "Loading instance geometries...");
 
+                // clone & bind meshes
                 for (int i = 0; i < meshDatas.size(); i++) {
-
                     final MeshData meshData = meshDatas.get(i);
-
                     final AnimatedModel data3D = (AnimatedModel) ret.get(i);
 
                     SkeletonData skeletonData = skeletons.get(meshData.getId());
-
-                    if (skeletonData == null) skeletonData = skeletons.get("default");
-
-                    if (skeletonData == null) continue;
-
-
-
-                    List<JointData> allJointData = skeletonData.getHeadJoint().findAll(meshData.getId());
-
-                    if (allJointData.isEmpty()) continue;
-
-
-
-                    if (allJointData.size() == 1) {
-
-                        data3D.setBindTransform(allJointData.get(0).getBindTransform());
-
-                        continue;
-
+                    if (skeletonData == null) {
+                        skeletonData = skeletons.get("default");
                     }
 
+                    if (skeletonData == null) continue;;
 
+                    // no joint linked to geometry - just draw as it is
+                    List<JointData> allJointData = skeletonData.getHeadJoint().findAll(meshData.getId());
+                    if (allJointData.isEmpty()) {
+                        Log.d("ColladaLoaderTask", "No joint linked to mesh: " + meshData.getId());
+                        continue;
+                    }
 
+                    // found 1 joint linked to geometry - update matrix
+                    if (allJointData.size() == 1) {
+                        // Log.d("ColladaLoaderTask", "Found 1 single instance for mesh: " + meshData.getId());
+                        final JointData jointData = allJointData.get(0);
+                        // FIXME: set this only if not animated
+                        data3D.setBindTransform(jointData.getBindTransform());
+                        continue;
+                    }
+
+                    // found several mesh instances - draw them all
+                    Log.i("ColladaLoaderTask", "Found multiple instances for mesh: " + meshData.getId() + ". Total: " + allJointData.size());
                     boolean isOriginalMeshConfigured = false;
-
                     for (JointData jd : allJointData) {
 
+                        // update matrix for original mesh
                         if (!isOriginalMeshConfigured) {
-
                             data3D.setBindTransform(jd.getBindTransform());
-
                             isOriginalMeshConfigured = true;
-
                             continue;
-
                         }
 
+                        Log.i("ColladaLoaderTask", "Cloning mesh for joint: " + jd.getName());
                         final AnimatedModel instance_geometry = data3D.clone();
-
                         instance_geometry.setId(data3D.getId() + "_instance_" + jd.getName());
-
+                        // FIXME: set this only if not animated
                         instance_geometry.setBindTransform(jd.getBindTransform());
 
                         callback.onLoad(instance_geometry);
-
                         ret.add(instance_geometry);
-
                         allMeshes.add(meshData.clone());
-
                     }
-
                 }
-
             } catch (Exception ex) {
-
                 Log.e("ColladaLoaderTask", "Error loading visual scene", ex);
-
             }
 
 
-
-            // -------------------------------------------------------------------------------------
-
-            // ROBLOX TEXTURE MAPPING
-
-            // -------------------------------------------------------------------------------------
-
+            // load materials
             Log.i("ColladaLoaderTask", "--------------------------------------------------");
-
-            Log.i("ColladaLoaderTask", "Loading and Mapping Skin Textures...");
-
+            Log.i("ColladaLoaderTask", "Loading textures...");
             Log.i("ColladaLoaderTask", "--------------------------------------------------");
-
             callback.onProgress("Loading textures...");
-
-
-
             try {
-
                 for (int i = 0; i < meshDatas.size(); i++) {
-
                     final MeshData meshData = meshDatas.get(i);
-
                     for (int e = 0; e < meshData.getElements().size(); e++) {
-
                         final Element element = meshData.getElements().get(e);
-
-
-
-                        if (element.getMaterial() != null) {
-
-
-
-                            if (element.getMaterial().getColorTexture() == null) {
-
-                                element.getMaterial().setColorTexture(new Texture());
-
-                            }
-
-
-
-                            String texturePath;
-
-                            boolean isFallback = false;
-
-
-
-                            if (element.getMaterial().getColorTexture().getFile() != null) {
-
-                                texturePath = element.getMaterial().getColorTexture().getFile();
-
-                            } else {
-
-                                String modelUriStr = uri.toString();
-
-                                int lastSlash = modelUriStr.lastIndexOf('/');
-
-                                if (lastSlash != -1) {
-
-                                    texturePath = modelUriStr.substring(0, lastSlash + 1) + "skin.png";
-
-                                } else {
-
-                                    texturePath = "skin.png";
-
-                                }
-
-                                isFallback = true;
-
-                                Log.i("ColladaLoaderTask", "Using fallback skin path: " + texturePath);
-
-                            }
-
-
-
-                            InputStream stream = null;
-
-                            try {
-
-                                if (isFallback || texturePath.startsWith("android://")) {
-
-                                    stream = ContentUtils.getInputStream(new URI(texturePath));
-
-                                } else {
-
-                                    stream = ContentUtils.getInputStream(texturePath);
-
-                                }
-
-
-
-                                if (stream != null) {
-
-                                    Bitmap originalSkin = BitmapFactory.decodeStream(stream);
-
-
-
-                                    if (originalSkin != null) {
-
-                                        Log.i("ColladaLoaderTask", "Generating Roblox map for: " + texturePath);
-
-
-
-                                        // Generate mapped texture
-
-                                        Bitmap mappedTexture = generateFullRobloxTexture(originalSkin, originalSkin);
-
-
-
-                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-                                        mappedTexture.compress(Bitmap.CompressFormat.PNG, 100, baos);
-
-                                        byte[] textureBytes = baos.toByteArray();
-
-
-
-                                        element.getMaterial().getColorTexture().setData(textureBytes);
-
-                                        element.getMaterial().getColorTexture().setFile(texturePath);
-
-                                        element.getMaterial().setAlpha(1.0f); // Force visible
-
-
-
-                                        Log.i("ColladaLoaderTask", "Success! Skin applied (" + textureBytes.length + " bytes)");
-
-
-
-                                        originalSkin.recycle();
-
-                                        mappedTexture.recycle();
-
-                                    } else {
-
-                                        Log.e("ColladaLoaderTask", "Failed to decode bitmap: " + texturePath);
-
-                                    }
-
-                                    stream.close();
-
-                                }
+                        if (element.getMaterial() != null && element.getMaterial().getColorTexture() != null &&
+                        element.getMaterial().getColorTexture().getFile() != null) {
+                            final String textureFile = element.getMaterial().getColorTexture().getFile();
+                            // log event
+                            Log.i("ColladaLoaderTask", "Reading texture file... " + textureFile);
+
+                            // read texture data
+                            try (InputStream stream = ContentUtils.getInputStream(textureFile)) {
+
+                                // read data
+                                element.getMaterial().getColorTexture().setData(IOUtils.read(stream));
+
+                                // log event
+                                Log.i("ColladaLoaderTask", "Texture linked... " + element.getMaterial().getColorTexture().getData().length + " (bytes)");
 
                             } catch (Exception ex) {
-
-                                Log.e("ColladaLoaderTask", "Error reading/processing skin: " + ex.getMessage());
-
-                                if (stream != null) try { stream.close(); } catch(Exception ignored){}
-
+                                Log.e("ColladaLoaderTask", String.format("Error reading texture file: %s", ex.getMessage()));
                             }
-
                         }
-
                     }
-
                 }
-
             } catch (Exception ex) {
-
                 Log.e("ColladaLoaderTask", "Error loading materials", ex);
-
             }
 
 
-
-            // Skinning Data
-
-            Log.i("ColladaLoaderTask", "Loading skinning data...");
-
+            // load skinning data
             Map<String, SkinningData> skins = null;
-
             try {
 
-                XmlNode library_controllers = xml.getChild("library_controllers");
+                // log event
+                Log.i("ColladaLoaderTask", "--------------------------------------------------");
+                Log.i("ColladaLoaderTask", "Loading skinning data...");
+                Log.i("ColladaLoaderTask", "--------------------------------------------------");
 
+                XmlNode library_controllers = xml.getChild("library_controllers");
                 if (library_controllers != null && !library_controllers.getChildren("controller").isEmpty()) {
 
-                    SkinLoader skinLoader = new SkinLoader(library_controllers, Constants.MAX_VERTEX_WEIGHTS);
+                    // notify user
+                    callback.onProgress("Loading skinning data...");
 
+                    // load skin data
+                    SkinLoader skinLoader = new SkinLoader(library_controllers, Constants.MAX_VERTEX_WEIGHTS);
                     skins = skinLoader.loadSkinData();
 
+                    // update bind_shape_matrix
                     for (int i = 0; i < allMeshes.size(); i++) {
-
                         SkinningData skinningData = skins.get(allMeshes.get(i).getId());
-
                         if (skinningData != null) {
-
                             final MeshData meshData = allMeshes.get(i);
-
                             final AnimatedModel data3D = (AnimatedModel) ret.get(i);
-
                             meshData.setBindShapeMatrix(skinningData.getBindShapeMatrix());
-
                             data3D.setBindShapeMatrix(meshData.getBindShapeMatrix());
-
                         }
-
                     }
 
+                } else {
+                    Log.i("ColladaLoaderTask", "No skinning data available");
                 }
-
             } catch (Exception ex) {
-
                 Log.e("ColladaLoaderTask", "Error loading skinning data", ex);
-
             }
-
-
 
             final AnimationLoader loader = new AnimationLoader(xml);
 
-
+            // finish skinning + joint update
 
             try {
-
                 if (loader.isAnimated()) {
 
+                    // log event
+                    Log.i("ColladaLoaderTask", "--------------------------------------------------");
                     Log.i("ColladaLoaderTask", "Loading joints...");
+                    Log.i("ColladaLoaderTask", "--------------------------------------------------");
 
+                    // notify user
+                    callback.onProgress("Loading joints...");
+
+                    // update joint indices
+                    // - skinning needs joint indices because auto-generated skinning rely on joint indices
+                    // - skeleton needs skinning because joint index depend on bone order specified in skinning data
                     SkeletonLoader skeletonLoader = new SkeletonLoader(xml);
-
                     skeletonLoader.updateJointData(skins, skeletons);
 
-
-
                     for (int i = 0; i < allMeshes.size(); i++) {
-
                         final MeshData meshData = allMeshes.get(i);
-
                         final AnimatedModel data3D = (AnimatedModel) ret.get(i);
 
+
                         SkeletonData skeletonData = skeletons.get(meshData.getId());
+                        if (skeletonData == null) {
+                            skeletonData = skeletons.get("default");
+                        }
 
-                        if (skeletonData == null) skeletonData = skeletons.get("default");
-
-
-
+                        // initialize jointIds and vertex weights array
                         SkinLoader.loadSkinningData(meshData, skins != null? skins.get(meshData.getId()) : null, skeletonData);
 
+                        // load skin arrays
                         SkinLoader.loadSkinningArrays(meshData);
-
-
-
+                        
                         data3D.setJoints(meshData.getJointsBuffer());
-
                         data3D.setWeights(meshData.getWeightsBuffer());
-
+                        Log.d("ColladaLoader", "Loaded skinning data: "
+                                + "jointIds: " + (meshData.getJointsArray() != null ? meshData.getJointsArray().length : 0)
+                                + ", weights: " + (meshData.getWeightsArray() != null ? meshData.getWeightsArray().length : 0));
                     }
 
                 }
-
             } catch (Exception ex) {
-
                 Log.e("ColladaLoaderTask", "Error updating joint data", ex);
-
             }
 
+            //if (true) return ret;
 
-
+            // parse animation
             try {
-
                 if (loader.isAnimated()) {
 
-                    Log.i("ColladaLoaderTask", "Loading animation...");
+                    // log event
+                    Log.i("ColladaLoaderTask", "--------------------------------------------------");
+                    Log.i("ColladaLoaderTask", "Loading animation... ");
+                    Log.i("ColladaLoaderTask", "--------------------------------------------------");
 
+                    // notify user
+                    callback.onProgress("Loading animation...");
+
+                    // load animation
                     final Animation animation = loader.load();
 
                     for (int i = 0; i < allMeshes.size(); i++) {
-
                         final MeshData meshData = allMeshes.get(i);
-
                         final AnimatedModel data3D = (AnimatedModel) ret.get(i);
 
                         SkeletonData skeletonData = skeletons.get(meshData.getId());
-
-                        if (skeletonData == null) skeletonData = skeletons.get("default");
-
-
+                        if (skeletonData == null) {
+                            skeletonData = skeletons.get("default");
+                        }
 
                         data3D.setSkeleton(skeletonData);
-
                         data3D.setAnimation(animation);
 
+                        // FIXME: this should be handled differently - this must be null for iris mechanical + countdown timer
                         data3D.setBindTransform(null);
-
                     }
 
                 }
-
             } catch (Exception ex) {
-
                 Log.e("ColladaLoaderTask", "Error loading animation", ex);
-
             }
 
-
-
+            // log event
+            if (ret.isEmpty()) {
+                Log.e("ColladaLoaderTask", "Mesh data list empty. Did you exclude any model in GeometryLoader.java?");
+            }
             Log.i("ColladaLoaderTask", "Loading model finished. Objects: " + ret.size());
 
-
-
         } catch (Exception ex) {
-
             Log.e("ColladaLoaderTask", "Problem loading model", ex);
-
         }
-
         return ret;
-
-    }
-
-
-
-    // =========================================================================
-
-    //  ROBLOX TEXTURE GENERATION LOGIC
-
-    // =========================================================================
-
-
-
-    private static Bitmap generateFullRobloxTexture(Bitmap pantsBitmap, Bitmap shirtBitmap) {
-
-        Bitmap finalTexture = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888);
-
-        Canvas canvas = new Canvas(finalTexture);
-
-
-
-        // Fill background with white to fix "invisible model" issue
-
-        canvas.drawColor(Color.WHITE);
-
-
-
-        int i = 1; // Scale factor matches RobloxSkinKt default
-
-        Side[] sides = Side.values();
-
-
-
-        // 1. Draw PANTS
-
-        Part[] pantsParts = {Part.BODY, Part.LEFT_LEG, Part.RIGHT_LEG};
-
-        for (Part part : pantsParts) {
-
-            for (Side side : sides) {
-
-                Rect srcRect = getSourceRect(part, side, i);
-
-                Rect dstRect = getDestRect(part, side, i);
-
-                if (srcRect.width() > 0 && dstRect.width() > 0 && pantsBitmap != null) {
-
-                    drawPart(canvas, pantsBitmap, srcRect, dstRect);
-
-                }
-
-            }
-
-        }
-
-
-
-        // 2. Draw SHIRT (On top)
-
-        Part[] shirtParts = {Part.BODY, Part.LEFT_ARM, Part.RIGHT_ARM};
-
-        for (Part part : shirtParts) {
-
-            for (Side side : sides) {
-
-                Rect srcRect = getSourceRect(part, side, i);
-
-                Rect dstRect = getDestRect(part, side, i);
-
-                if (srcRect.width() > 0 && dstRect.width() > 0 && shirtBitmap != null) {
-
-                    drawPart(canvas, shirtBitmap, srcRect, dstRect);
-
-                }
-
-            }
-
-        }
-
-        return finalTexture;
-
-    }
-
-
-
-    private static void drawPart(Canvas canvas, Bitmap source, Rect src, Rect dst) {
-
-        try {
-
-            if (src.left >= 0 && src.top >= 0 && src.right <= source.getWidth() && src.bottom <= source.getHeight()) {
-
-                Bitmap piece = Bitmap.createBitmap(source, src.left, src.top, src.width(), src.height());
-
-                canvas.drawBitmap(piece, null, dst, null);
-
-            }
-
-        } catch (Exception e) {}
-
-    }
-
-
-
-    private static Rect getSourceRect(Part part, Side side, int i) {
-
-        if (part == Part.BODY) {
-
-            if (side == Side.FRONT) return new Rect(i * 229, i * 72, i * 229 + (i * 132), i * 72 + (i * 132));
-
-            if (side == Side.LEFT)  return new Rect(i * 361, i * 72, i * 361 + (i * 66), i * 72 + (i * 132));
-
-            if (side == Side.BACK)  return new Rect(i * 427, i * 72, i * 427 + (i * 129), i * 72 + (i * 132));
-
-            if (side == Side.RIGHT) return new Rect(i * 165, i * 72, i * 165 + (i * 64), i * 72 + (i * 132));
-
-            if (side == Side.UP)    return new Rect(i * 229, i * 8,  i * 229 + (i * 32), i * 8 + (i * 64));
-
-            if (side == Side.DOWN)  return new Rect(i * 229, i * 204, i * 229 + (i * 132), i * 204 + (i * 64));
-
-        }
-
-
-
-        if (part == Part.RIGHT_ARM || part == Part.RIGHT_LEG) {
-
-            if (side == Side.FRONT) return new Rect(i * 215, i * 353, i * 215 + (i * 64), i * 353 + (i * 132));
-
-            if (side == Side.LEFT)  return new Rect(i * 19,  i * 353, i * 19 + (i * 66),  i * 353 + (i * 132));
-
-            if (side == Side.BACK)  return new Rect(i * 85,  i * 353, i * 85 + (i * 64),  i * 353 + (i * 132));
-
-            if (side == Side.RIGHT) return new Rect(i * 149, i * 353, i * 149 + (i * 68), i * 353 + (i * 132));
-
-            if (side == Side.UP)    return new Rect(i * 215, i * 289, i * 215 + (i * 68), i * 289 + (i * 64));
-
-            if (side == Side.DOWN)  return new Rect(i * 215, i * 485, i * 215 + (i * 68), i * 485 + (i * 64));
-
-        }
-
-
-
-        if (part == Part.LEFT_ARM || part == Part.LEFT_LEG) {
-
-            if (side == Side.FRONT) return new Rect(i * 307, i * 353, i * 307 + (i * 64), i * 353 + (i * 132));
-
-            if (side == Side.LEFT)  return new Rect(i * 375, i * 353, i * 375 + (i * 66), i * 353 + (i * 132));
-
-            if (side == Side.BACK)  return new Rect(i * 441, i * 353, i * 441 + (i * 64), i * 353 + (i * 132));
-
-            if (side == Side.RIGHT) return new Rect(i * 505, i * 353, i * 505 + (i * 68), i * 353 + (i * 132));
-
-            if (side == Side.UP)    return new Rect(i * 307, i * 289, i * 307 + (i * 68), i * 289 + (i * 64));
-
-            if (side == Side.DOWN)  return new Rect(i * 307, i * 485, i * 307 + (i * 68), i * 485 + (i * 64));
-
-        }
-
-        return new Rect(0, 0, 0, 0);
-
-    }
-
-
-
-    private static Rect getDestRect(Part part, Side side, int i) {
-
-        // Exact translation of RobloxSkinKt.frameIn for the 'textture' template case
-
-        if (part == Part.BODY) {
-
-            if (side == Side.FRONT) return new Rect(0, i * 72, i * 132, i * 72 + (i * 132));
-
-            if (side == Side.LEFT)  return new Rect(i * 132, i * 72, i * 132 + (i * 66), i * 72 + (i * 132));
-
-            if (side == Side.BACK)  return new Rect(i * 198, i * 72, i * 198 + (i * 129), i * 72 + (i * 132));
-
-            if (side == Side.RIGHT) return new Rect(i * 327, i * 72, i * 327 + (i * 64), i * 72 + (i * 132));
-
-            if (side == Side.UP)    return new Rect(0, i * 8, i * 132, i * 8 + (i * 64));
-
-            if (side == Side.DOWN)  return new Rect(0, i * 204, i * 132, i * 204 + (i * 64));
-
-        }
-
-
-
-        if (part == Part.LEFT_ARM) {
-
-            if (side == Side.FRONT) return new Rect(i * 564, i * 64, i * 564 + (i * 64), i * 64 + (i * 112));
-
-            if (side == Side.LEFT)  return new Rect(i * 628, i * 64, i * 628 + (i * 66), i * 64 + (i * 112));
-
-            if (side == Side.BACK)  return new Rect(i * 694, i * 64, i * 694 + (i * 64), i * 64 + (i * 112));
-
-            if (side == Side.RIGHT) return new Rect(i * 496, i * 64, i * 496 + (i * 68), i * 64 + (i * 112));
-
-            if (side == Side.UP)    return new Rect(i * 496, 0, i * 496 + (i * 68), i * 64);
-
-            if (side == Side.DOWN)  return new Rect(i * 692, i * 215, i * 692 + (i * 68), i * 215 + (i * 64));
-
-        }
-
-
-
-        if (part == Part.RIGHT_ARM) {
-
-            if (side == Side.FRONT) return new Rect(i * 828, i * 64, i * 828 + (i * 64), i * 64 + (i * 112));
-
-            if (side == Side.LEFT)  return new Rect(i * 892, i * 64, i * 892 + (i * 66), i * 64 + (i * 112));
-
-            if (side == Side.BACK)  return new Rect(i * 958, i * 64, i * 958 + (i * 64), i * 64 + (i * 112));
-
-            if (side == Side.RIGHT) return new Rect(i * 760, i * 64, i * 760 + (i * 68), i * 64 + (i * 112));
-
-            if (side == Side.UP)    return new Rect(i * 760, 0, i * 760 + (i * 68), i * 64);
-
-            if (side == Side.DOWN)  return new Rect(i * 956, i * 215, i * 956 + (i * 68), i * 215 + (i * 64));
-
-        }
-
-
-
-        if (part == Part.LEFT_LEG) {
-
-            if (side == Side.FRONT) return new Rect(i * 564, i * 348, i * 564 + (i * 64), i * 348 + (i * 112));
-
-            if (side == Side.LEFT)  return new Rect(i * 628, i * 348, i * 628 + (i * 66), i * 348 + (i * 112));
-
-            if (side == Side.BACK)  return new Rect(i * 694, i * 348, i * 694 + (i * 64), i * 348 + (i * 112));
-
-            if (side == Side.RIGHT) return new Rect(i * 496, i * 348, i * 496 + (i * 68), i * 348 + (i * 112));
-
-            if (side == Side.UP)    return new Rect(i * 496, i * 284, i * 496 + (i * 68), i * 284 + (i * 64));
-
-            if (side == Side.DOWN)  return new Rect(i * 692, i * 499, i * 692 + (i * 68), i * 499 + (i * 64));
-
-        }
-
-
-
-        if (part == Part.RIGHT_LEG) {
-
-            if (side == Side.FRONT) return new Rect(i * 828, i * 348, i * 828 + (i * 64), i * 348 + (i * 112));
-
-            if (side == Side.LEFT)  return new Rect(i * 892, i * 348, i * 892 + (i * 66), i * 348 + (i * 112));
-
-            if (side == Side.BACK)  return new Rect(i * 958, i * 348, i * 958 + (i * 64), i * 348 + (i * 112));
-
-            if (side == Side.RIGHT) return new Rect(i * 760, i * 348, i * 760 + (i * 68), i * 348 + (i * 112));
-
-            if (side == Side.UP)    return new Rect(i * 760, i * 284, i * 760 + (i * 68), i * 284 + (i * 64));
-
-            if (side == Side.DOWN)  return new Rect(i * 956, i * 499, i * 956 + (i * 68), i * 499 + (i * 64));
-
-        }
-
-        return new Rect(0, 0, 0, 0);
-
     }
 
 }
