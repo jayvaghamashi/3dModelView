@@ -4,9 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- AR Required Features -->
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- AR Required Features -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
@@ -24,39 +22,53 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.A3DViewApp"
         tools:targetApi="31">
+        <activity
+            android:name=".activity_showcloth"
+            android:exported="false" />
+        <activity
+            android:name=".activity_home"
+            android:exported="false" />
+        <activity
+            android:name=".activity_fivequestion"
+            android:exported="false" />
+        <activity
+            android:name=".utils.activity_fivequestion"
+            android:exported="false"
+            android:theme="@style/Theme.A3DViewApp" />
+        <activity
+            android:name=".activity_fourquestion"
+            android:exported="false" />
+        <activity
+            android:name=".activity_thirdquestion"
+            android:exported="false" />
+        <activity
+            android:name=".activity_seondquestion"
+            android:exported="false" />
+        <activity
+            android:name=".activity_firstquestion"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-        <!-- AR Core Meta Data -->
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity> <!-- AR Core Meta Data -->
         <meta-data
             android:name="com.google.ar.core"
-            android:value="required" />
-
-        <!-- Main Dashboard Activity -->
+            android:value="required" /> <!-- Main Dashboard Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait">
+
+            <!--
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            -->
         </activity>
-
-        <!-- Products List Activity -->
-        <activity
-            android:name=".ProductsActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-
-        <!-- AR 3D Viewer Activity -->
-
-        <activity
-            android:name=".RealTextureActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:exported="true"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.A3DViewApp.FullScreen"
-            android:hardwareAccelerated="true" />
-
     </application>
 
 </manifest>

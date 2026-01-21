@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <vector android:width="156dp" android:height="156dp" android:viewportWidth="156" android:viewportHeight="156">
+            <!-- Selected state -->
+            <path
+                android:pathData="M60.82,0C51.91,5.68 46,15.65 46,27C46,44.67 60.33,59 78,59C95.67,59 110,44.67 110,27C110,15.65 104.09,5.68 95.18,0H143C150.18,0 156,5.82 156,13V143C156,150.18 150.18,156 143,156H94C96.51,152.66 98,148.5 98,144C98,132.95 89.05,124 78,124C66.95,124 58,132.95 58,144C58,148.5 59.49,152.66 62,156H13C5.82,156 0,150.18 0,143V13C0,5.82 5.82,0 13,0H60.82Z"
+                android:fillColor="#3AFD85"/> <!-- Stroke color when selected -->
+        </vector>
+    </item>
+    <item>
+        <vector android:width="156dp" android:height="156dp" android:viewportWidth="156" android:viewportHeight="156">
+            <!-- Default state -->
+            <path
+                android:pathData="M60.82,0C51.91,5.68 46,15.65 46,27C46,44.67 60.33,59 78,59C95.67,59 110,44.67 110,27C110,15.65 104.09,5.68 95.18,0H143C150.18,0 156,5.82 156,13V143C156,150.18 150.18,156 143,156H94C96.51,152.66 98,148.5 98,144C98,132.95 89.05,124 78,124C66.95,124 58,132.95 58,144C58,148.5 59.49,152.66 62,156H13C5.82,156 0,150.18 0,143V13C0,5.82 5.82,0 13,0H60.82Z"
+                android:fillColor="#A4FFC7"
+            android:strokeColor="#3AFD85"
+            android:strokeWidth="2"/>
+        </vector>
+    </item>
+</selector>
