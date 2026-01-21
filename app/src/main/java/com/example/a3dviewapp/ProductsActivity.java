@@ -43,14 +43,12 @@ public class ProductsActivity extends AppCompatActivity {
         setupRecyclerView();
         setupChipListeners();
 
-        // Get category from intent
         String category = getIntent().getStringExtra("category");
         if (category != null && !category.equals("all")) {
             selectedCategory = category;
             selectChip(category);
         }
 
-        // Load initial data
         loadProducts(selectedCategory);
     }
 
@@ -72,7 +70,6 @@ public class ProductsActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
-
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
     }
 
@@ -83,26 +80,22 @@ public class ProductsActivity extends AppCompatActivity {
         adapter = new ProductAdapter(this, filteredProducts, new ProductAdapter.OnProductClickListener() {
             @Override
             public void onProductClick(Product product) {
-                // Open Simple3DViewerActivity (corrected name)
-                Intent intent = new Intent(ProductsActivity.this,RealTextureActivity.class);
-                intent.putExtra("product_name", product.getTitle());
-                intent.putExtra("product_image", product.getImageUrl());
+                Intent intent = new Intent(ProductsActivity.this, RealTextureActivity.class);
                 intent.putExtra("product_id", product.getId());
+                intent.putExtra("product_name", product.getTitle());
+                intent.putExtra("product_type", product.getType());
+                intent.putExtra("product_image", product.getActualImageUrl());
                 startActivity(intent);
             }
 
             @Override
             public void onFavoriteClick(Product product, boolean isFavorite) {
-                Toast.makeText(ProductsActivity.this,
-                        isFavorite ? "Added to favorites" : "Removed from favorites",
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProductsActivity.this, isFavorite ? "Added to favorites" : "Removed from favorites", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onAddToCart(Product product) {
-                Toast.makeText(ProductsActivity.this,
-                        "Added to cart: " + product.getTitle(),
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProductsActivity.this, "Added to cart: " + product.getTitle(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -116,17 +109,10 @@ public class ProductsActivity extends AppCompatActivity {
                 selectedCategory = "all";
             } else {
                 int checkedId = checkedIds.get(0);
-
-                if (checkedId == R.id.chipAll) {
-                    selectedCategory = "all";
-                } else if (checkedId == R.id.chipTShirts) {
-                    selectedCategory = "tshirts";
-                } else if (checkedId == R.id.chipShirts) {
-                    selectedCategory = "shirts";
-                } else if (checkedId == R.id.chipPants) {
-                    selectedCategory = "pants";
-                }
-
+                if (checkedId == R.id.chipAll) selectedCategory = "all";
+                else if (checkedId == R.id.chipTShirts) selectedCategory = "tshirts";
+                else if (checkedId == R.id.chipShirts) selectedCategory = "shirts";
+                else if (checkedId == R.id.chipPants) selectedCategory = "pants";
                 loadProducts(selectedCategory);
             }
         });
@@ -134,40 +120,21 @@ public class ProductsActivity extends AppCompatActivity {
 
     private void selectChip(String category) {
         switch (category) {
-            case "all":
-                chipAll.setChecked(true);
-                break;
-            case "tshirts":
-                chipTShirts.setChecked(true);
-                break;
-            case "shirts":
-                chipShirts.setChecked(true);
-                break;
-            case "pants":
-                chipPants.setChecked(true);
-                break;
+            case "all": chipAll.setChecked(true); break;
+            case "tshirts": chipTShirts.setChecked(true); break;
+            case "shirts": chipShirts.setChecked(true); break;
+            case "pants": chipPants.setChecked(true); break;
         }
     }
 
     private void loadProducts(String category) {
-        if (category.equals("all")) {
-            // Load all products from all categories
-            loadAllProducts();
-        } else {
-            // Load specific category
-            fetchCategoryProducts(category);
-        }
+        if (category.equals("all")) loadAllProducts();
+        else fetchCategoryProducts(category);
     }
 
     private void fetchCategoryProducts(String category) {
         showLoading(true);
-
-        ApiClient.ProductRequest request = new ApiClient.ProductRequest(
-                category,
-                "1",
-                "50"
-        );
-
+        ApiClient.ProductRequest request = new ApiClient.ProductRequest(category, "1", "50");
         ApiClient.ApiInterface apiInterface = ApiClient.getClient().create(ApiClient.ApiInterface.class);
         Call<ApiResponse> call = apiInterface.getProducts(request);
 
@@ -175,19 +142,13 @@ public class ProductsActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
                 showLoading(false);
-
                 if (response.isSuccessful() && response.body() != null) {
-                    ApiResponse apiResponse = response.body();
-                    if (apiResponse.getResult().equals("ok")) {
-                        filteredProducts = apiResponse.getData();
+                    if ("ok".equals(response.body().getResult())) {
+                        filteredProducts = response.body().getData();
                         adapter.updateData(filteredProducts);
                         updateTitle(category);
                         updateEmptyState();
-                    } else {
-                        Toast.makeText(ProductsActivity.this, "API Error", Toast.LENGTH_SHORT).show();
                     }
-                } else {
-                    Toast.makeText(ProductsActivity.this, "Failed to fetch data", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -200,38 +161,21 @@ public class ProductsActivity extends AppCompatActivity {
     }
 
     private void loadAllProducts() {
-        showLoading(true);
-
-        // We'll load tshirts first as default
-        fetchCategoryProducts("tshirts");
+        fetchCategoryProducts("tshirts"); // Default for all
     }
 
     private void updateTitle(String category) {
         String title = "All Products";
-
-        switch (category) {
-            case "tshirts":
-                title = "T-Shirts";
-                break;
-            case "shirts":
-                title = "Shirts";
-                break;
-            case "pants":
-                title = "Pants";
-                break;
-        }
-
+        if (category.equals("tshirts")) title = "T-Shirts";
+        else if (category.equals("shirts")) title = "Shirts";
+        else if (category.equals("pants")) title = "Pants";
         toolbar.setTitle(title);
     }
 
     private void showLoading(boolean isLoading) {
-        if (progressBar != null) {
-            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        }
+        if (progressBar != null) progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         productsRecyclerView.setVisibility(isLoading ? View.GONE : View.VISIBLE);
-        if (isLoading) {
-            emptyState.setVisibility(View.GONE);
-        }
+        if (isLoading) emptyState.setVisibility(View.GONE);
     }
 
     private void updateEmptyState() {

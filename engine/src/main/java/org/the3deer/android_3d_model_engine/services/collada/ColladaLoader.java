@@ -88,9 +88,9 @@ public final class ColladaLoader {
 
     // Enums for Mapping Logic
 
-    private enum Part { BODY, LEFT_ARM, RIGHT_ARM, LEFT_LEG, RIGHT_LEG }
+    public enum Part { BODY, LEFT_ARM, RIGHT_ARM, LEFT_LEG, RIGHT_LEG }
 
-    private enum Side { FRONT, BACK, LEFT, RIGHT, UP, DOWN }
+    public enum Side { FRONT, BACK, LEFT, RIGHT, UP, DOWN }
 
 
 
@@ -696,7 +696,7 @@ public final class ColladaLoader {
 
 
 
-    private static Bitmap generateFullRobloxTexture(Bitmap pantsBitmap, Bitmap shirtBitmap) {
+    public static Bitmap generateFullRobloxTexture(Bitmap pantsBitmap, Bitmap shirtBitmap) {
 
         Bitmap finalTexture = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888);
 
@@ -768,7 +768,7 @@ public final class ColladaLoader {
 
 
 
-    private static void drawPart(Canvas canvas, Bitmap source, Rect src, Rect dst) {
+    public static void drawPart(Canvas canvas, Bitmap source, Rect src, Rect dst) {
 
         try {
 
@@ -786,7 +786,7 @@ public final class ColladaLoader {
 
 
 
-    private static Rect getSourceRect(Part part, Side side, int i) {
+    public static Rect getSourceRect(Part part, Side side, int i) {
 
         if (part == Part.BODY) {
 
@@ -846,7 +846,7 @@ public final class ColladaLoader {
 
 
 
-    private static Rect getDestRect(Part part, Side side, int i) {
+    public static Rect getDestRect(Part part, Side side, int i) {
 
         // Exact translation of RobloxSkinKt.frameIn for the 'textture' template case
 

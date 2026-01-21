@@ -79,12 +79,17 @@ public class MainActivity extends AppCompatActivity {
             adapter = new ProductAdapter(this, filteredProducts, new ProductAdapter.OnProductClickListener() {
                 @Override
                 public void onProductClick(Product product) {
-                    // RealTextureActivity ખોલો અને પ્રોડક્ટનો ડેટા મોકલો
                     try {
                         Intent intent = new Intent(MainActivity.this, RealTextureActivity.class);
-                        // product_id માં ફાઈલનું નામ (જેમ કે man, girl, roblox) હોવું જરૂરી છે
+
+                        // Pass basic info
                         intent.putExtra("product_id", product.getId());
                         intent.putExtra("product_name", product.getTitle());
+                        intent.putExtra("product_type", product.getType());
+
+                        // Pass the actual texture URL using the helper method in Product.java
+                        intent.putExtra("product_image", product.getActualImageUrl());
+
                         startActivity(intent);
                     } catch (Exception e) {
                         Toast.makeText(MainActivity.this, "Error opening 3D view: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -107,56 +112,37 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Error setting up RecyclerView: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
     private void setupClickListeners() {
         // T-Shirts Card Click
         tshirtsCard.setOnClickListener(v -> {
-            try {
-                productsTitle.setText("T-Shirts");
-                currentCategory = "tshirts";
-                fetchProducts("tshirts");
-                // Reset search
-                searchBar.setText("");
-            } catch (Exception e) {
-                Toast.makeText(this, "Error loading T-Shirts: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
+            productsTitle.setText("T-Shirts");
+            currentCategory = "tshirts";
+            fetchProducts("tshirts");
+            searchBar.setText("");
         });
 
         // Shirts Card Click
         shirtsCard.setOnClickListener(v -> {
-            try {
-                productsTitle.setText("Shirts");
-                currentCategory = "shirts";
-                fetchProducts("shirts");
-                // Reset search
-                searchBar.setText("");
-            } catch (Exception e) {
-                Toast.makeText(this, "Error loading Shirts: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
+            productsTitle.setText("Shirts");
+            currentCategory = "shirts";
+            fetchProducts("shirts");
+            searchBar.setText("");
         });
 
         // Pants Card Click
         pantsCard.setOnClickListener(v -> {
-            try {
-                productsTitle.setText("Pants");
-                currentCategory = "pants";
-                fetchProducts("pants");
-                // Reset search
-                searchBar.setText("");
-            } catch (Exception e) {
-                Toast.makeText(this, "Error loading Pants: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
+            productsTitle.setText("Pants");
+            currentCategory = "pants";
+            fetchProducts("pants");
+            searchBar.setText("");
         });
 
         // View All Click
         viewAll.setOnClickListener(v -> {
-            try {
-                // Open ProductsActivity with current category
-                Intent intent = new Intent(MainActivity.this, ProductsActivity.class);
-                intent.putExtra("category", currentCategory);
-                startActivity(intent);
-            } catch (Exception e) {
-                Toast.makeText(this, "Error opening products: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
+            Intent intent = new Intent(MainActivity.this, ProductsActivity.class);
+            intent.putExtra("category", currentCategory);
+            startActivity(intent);
         });
     }
 
@@ -179,12 +165,7 @@ public class MainActivity extends AppCompatActivity {
         showLoading(true);
 
         try {
-            ApiClient.ProductRequest request = new ApiClient.ProductRequest(
-                    category,
-                    "1",
-                    "28"
-            );
-
+            ApiClient.ProductRequest request = new ApiClient.ProductRequest(category, "1", "28");
             ApiClient.ApiInterface apiInterface = ApiClient.getClient().create(ApiClient.ApiInterface.class);
             Call<ApiResponse> call = apiInterface.getProducts(request);
 
@@ -192,94 +173,64 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
                     showLoading(false);
-
                     if (response.isSuccessful() && response.body() != null) {
                         ApiResponse apiResponse = response.body();
-                        if (apiResponse.getResult().equals("ok")) {
+                        if ("ok".equals(apiResponse.getResult())) {
                             allProducts = apiResponse.getData();
                             filteredProducts.clear();
                             filteredProducts.addAll(allProducts);
                             adapter.updateData(filteredProducts);
-
-                            // Update empty state
                             updateEmptyState();
-
-                            Toast.makeText(MainActivity.this,
-                                    "Loaded " + filteredProducts.size() + " products",
-                                    Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(MainActivity.this,
-                                    "API Error: " + apiResponse.toString(),
-                                    Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "API Error: " + apiResponse.toString(), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(MainActivity.this,
-                                "Failed to fetch data: " + response.message(),
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Failed to fetch data", Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<ApiResponse> call, Throwable t) {
                     showLoading(false);
-                    Toast.makeText(MainActivity.this,
-                            "Network Error: " + t.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                    t.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
         } catch (Exception e) {
             showLoading(false);
-            Toast.makeText(this, "Error fetching products: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
     private void filterProducts(String query) {
-        try {
-            filteredProducts.clear();
-
-            if (query.isEmpty()) {
-                filteredProducts.addAll(allProducts);
-            } else {
-                String searchQuery = query.toLowerCase().trim();
-                for (Product product : allProducts) {
-                    if (product.getTitle().toLowerCase().contains(searchQuery) ||
-                            (product.getId() != null && product.getId().toLowerCase().contains(searchQuery))) {
-                        filteredProducts.add(product);
-                    }
+        filteredProducts.clear();
+        if (query.isEmpty()) {
+            filteredProducts.addAll(allProducts);
+        } else {
+            String searchQuery = query.toLowerCase().trim();
+            for (Product product : allProducts) {
+                if (product.getTitle().toLowerCase().contains(searchQuery) ||
+                        (product.getId() != null && product.getId().toLowerCase().contains(searchQuery))) {
+                    filteredProducts.add(product);
                 }
             }
-
-            adapter.updateData(filteredProducts);
-            updateEmptyState();
-        } catch (Exception e) {
-            Toast.makeText(this, "Error filtering products: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+        adapter.updateData(filteredProducts);
+        updateEmptyState();
     }
 
     private void updateEmptyState() {
-        try {
-            if (filteredProducts.isEmpty()) {
-                emptyState.setVisibility(View.VISIBLE);
-                productsRecyclerView.setVisibility(View.GONE);
-            } else {
-                emptyState.setVisibility(View.GONE);
-                productsRecyclerView.setVisibility(View.VISIBLE);
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error updating empty state: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        if (filteredProducts.isEmpty()) {
+            emptyState.setVisibility(View.VISIBLE);
+            productsRecyclerView.setVisibility(View.GONE);
+        } else {
+            emptyState.setVisibility(View.GONE);
+            productsRecyclerView.setVisibility(View.VISIBLE);
         }
     }
 
     private void showLoading(boolean isLoading) {
-        try {
-            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-            productsRecyclerView.setVisibility(isLoading ? View.GONE : View.VISIBLE);
-            if (isLoading) {
-                emptyState.setVisibility(View.GONE);
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error showing loading: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        productsRecyclerView.setVisibility(isLoading ? View.GONE : View.VISIBLE);
+        if (isLoading) emptyState.setVisibility(View.GONE);
     }
 }
