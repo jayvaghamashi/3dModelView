@@ -76,10 +76,12 @@ public class ModelFragment extends Fragment {
         if (modelEngine == null){
           modelEngine = ModelEngine.newInstance(requireActivity(), savedInstanceState, getArguments());
         }
+        viewModel.setModelEngine(modelEngine);  // <--- ADD THIS LINE
         modelEngine.getBeanFactory().addOrReplace("extras", getArguments());
         modelEngine.getBeanFactory().addOrReplace("surface", new GLSurfaceView(requireActivity()));
         modelEngine.getBeanFactory().addOrReplace("fragment_gl", new GLFragment());
         modelEngine.getBeanFactory().addOrReplace("scene_0.loader", new SceneLoader());
+        modelEngine.getBeanFactory().addOrReplace("extras", getArguments());
         //modelEngine.getBeanFactory().addOrReplace("shaderFactory", new ShaderFactory(requireActivity()));
         modelEngine.init();
         modelEngine.refresh();

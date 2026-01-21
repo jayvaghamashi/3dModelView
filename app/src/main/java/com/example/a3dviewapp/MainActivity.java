@@ -1,5 +1,7 @@
 package com.example.a3dviewapp;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,7 +22,10 @@ import com.example.a3dviewapp.model.Product;
 import com.example.a3dviewapp.network.ApiClient;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.squareup.picasso.Picasso; // Make sure you have this import
+import com.squareup.picasso.Target;  // Make sure you have this import
 
+// Imports from your Engine Package
 import org.the3deer.android_3d_model_engine.ModelEngine;
 import org.the3deer.android_3d_model_engine.ModelFragment;
 import org.the3deer.android_3d_model_engine.ModelViewModel;
@@ -51,11 +56,15 @@ public class MainActivity extends AppCompatActivity {
     private List<Product> allProducts = new ArrayList<>();
     private List<Product> filteredProducts = new ArrayList<>();
 
+    // [IMPORTANT] Hold a reference to the Target so it doesn't get garbage collected
+    private Target textureTarget;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // This connects to the same ViewModel used in ModelFragment
         modelViewModel = new ViewModelProvider(this).get(ModelViewModel.class);
 
         initializeUI();
@@ -84,6 +93,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void update3DView(String modelPath) {
+        // NOTE: Ensure your asset path matches exactly.
+        // Usually "models/man.dae" -> "assets/models/man.dae"
         String uri = "android://com.example.a3dviewapp/assets/" + modelPath;
         ModelFragment fragment = ModelFragment.newInstance(uri, null, false);
         getSupportFragmentManager().beginTransaction()
@@ -98,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
             public void onProductClick(Product product) {
                 applyTextureToModel(product.getActualImageUrl());
             }
+
             @Override public void onFavoriteClick(Product p, boolean fav) {}
             @Override public void onAddToCart(Product p) {}
         });
@@ -105,32 +117,63 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void applyTextureToModel(String textureUrl) {
+        // 1. Get the engine. (This relies on Step 1 being fixed in ModelFragment!)
         ModelEngine engine = modelViewModel.getModelEngine().getValue();
-        if (engine != null) {
-            Scene scene = engine.getBeanFactory().find(Scene.class);
-            if (scene != null && !scene.getObjects().isEmpty()) {
-                Object3DData model = scene.getObjects().get(0);
 
-                Texture newTexture = new Texture();
-                newTexture.setFile(textureUrl);
+        if (engine == null) {
+            Toast.makeText(this, "Engine not ready yet!", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-                // Set on main material
-                if (model.getMaterial() != null) {
-                    model.getMaterial().setColorTexture(newTexture);
-                }
+        Toast.makeText(this, "Downloading Texture...", Toast.LENGTH_SHORT).show();
 
-                // Set on all sub-parts (Elements)
-                if (model.getElements() != null) {
-                    for (Element e : model.getElements()) {
-                        if (e.getMaterial() != null) {
-                            e.getMaterial().setColorTexture(newTexture);
+        // 2. Create a Picasso Target to download the image as a Bitmap
+        textureTarget = new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                // The bitmap is downloaded. Now apply it to the 3D scene.
+                Scene scene = engine.getBeanFactory().find(Scene.class);
+                if (scene != null && !scene.getObjects().isEmpty()) {
+                    Object3DData model = scene.getObjects().get(0);
+
+                    // Create the Texture object with the BITMAP
+                    Texture newTexture = new Texture();
+                    newTexture.setBitmap(bitmap); // <--- Use setBitmap, not setFile
+                    newTexture.setFile(textureUrl); // Optional: store URL for reference
+
+                    // Apply to Main Material
+                    if (model.getMaterial() != null) {
+                        model.getMaterial().setColorTexture(newTexture);
+                    }
+
+                    // Apply to Sub-Elements (Arms, Legs, etc.)
+                    if (model.getElements() != null) {
+                        for (Element e : model.getElements()) {
+                            if (e.getMaterial() != null) {
+                                e.getMaterial().setColorTexture(newTexture);
+                            }
                         }
                     }
+
+                    // Tell the engine the model has changed so it redraws
+                    model.setChanged(true);
+                    Toast.makeText(MainActivity.this, "Texture Applied!", Toast.LENGTH_SHORT).show();
                 }
-                model.setChanged(true); // Redraw
-                Toast.makeText(this, "Texture Loading...", Toast.LENGTH_SHORT).show();
             }
-        }
+
+            @Override
+            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                Toast.makeText(MainActivity.this, "Failed to load image", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+                // Optional: You can show a spinner here if you want
+            }
+        };
+
+        // 3. Trigger the download
+        Picasso.get().load(textureUrl).into(textureTarget);
     }
 
     private void setupClickListeners() {
@@ -168,7 +211,8 @@ public class MainActivity extends AppCompatActivity {
                     adapter.updateData(filteredProducts);
                 }
             }
-            @Override public void onFailure(Call<ApiResponse> call, Throwable t) {
+            @Override
+            public void onFailure(Call<ApiResponse> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
             }
         });
@@ -181,7 +225,8 @@ public class MainActivity extends AppCompatActivity {
             @Override public void afterTextChanged(Editable s) {
                 filteredProducts.clear();
                 for (Product p : allProducts) {
-                    if (p.getTitle().toLowerCase().contains(s.toString().toLowerCase())) filteredProducts.add(p);
+                    if (p.getTitle().toLowerCase().contains(s.toString().toLowerCase()))
+                        filteredProducts.add(p);
                 }
                 adapter.updateData(filteredProducts);
             }
