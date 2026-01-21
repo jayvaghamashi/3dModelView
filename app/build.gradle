@@ -4,7 +4,8 @@ plugins {
 
 android {
     namespace 'com.example.a3dviewapp'
-    compileSdk 35 // એન્જિન સાથે મેચ કરવા 35 કર્યું
+    compileSdk 36
+    // એન્જિન સાથે મેચ કરવા 35 કર્યું
 
     defaultConfig {
         applicationId "com.example.a3dviewapp"
@@ -24,12 +25,15 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     packagingOptions {
         exclude 'META-INF/proguard/androidx-annotations.pro'
+    }
+    buildFeatures {
+        viewBinding true
     }
 }
 
@@ -54,6 +58,9 @@ dependencies {
     // --- IMAGE HANDLING ---
     implementation 'com.squareup.picasso:picasso:2.8'
     implementation 'com.github.bumptech.glide:glide:4.14.2'
+    implementation libs.activity
+    implementation libs.navigation.fragment
+    implementation libs.navigation.ui
     annotationProcessor 'com.github.bumptech.glide:compiler:4.14.2'
 
     // --- UTILS ---

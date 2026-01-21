@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Target textureTarget;
 
-    // [FIX] Track which category is selected so we know how to process the image
+    // Track category to decide mapping logic
     private String currentCategory = "tshirts";
 
     // --- MAPPING ENUMS ---
@@ -151,12 +151,11 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Bitmap processedBitmap;
 
-                    // [FIX] Choose logic based on category
                     if (currentCategory.equals("tshirts")) {
-                        // T-Shirts are just one image on the chest
+                        // T-Shirts: Chest Decal Only
                         processedBitmap = processTShirtTexture(downloadedBitmap);
                     } else {
-                        // Shirts/Pants are full templates that need cutting
+                        // Shirts & Pants: Template Logic
                         processedBitmap = processRobloxTemplate(downloadedBitmap);
                     }
 
@@ -169,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
 
                         if (model.getElements() != null) {
                             for (Element e : model.getElements()) {
-                                // Apply only to the body geometry
                                 if (e.getId().equalsIgnoreCase("geometry1")) {
                                     if (e.getMaterial() != null) {
                                         e.getMaterial().setColorTexture(newTexture);
@@ -202,16 +200,13 @@ public class MainActivity extends AppCompatActivity {
     // LOGIC 1: T-SHIRTS (Single Image -> Chest Only)
     // -------------------------------------------------------------------------
     private Bitmap processTShirtTexture(Bitmap sourceBitmap) {
-        // Create standard canvas
         Bitmap finalTexture = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(finalTexture);
-        canvas.drawColor(Color.WHITE); // Default Body Color
+        canvas.drawColor(Color.WHITE);
 
-        // Calculate where the "Front Chest" is on the texture map
-        // Based on getDestRect(Part.BODY, Side.FRONT, 1) -> Rect(0, 72, 132, 204)
+        // Chest Area
         Rect chestRect = new Rect(0, 72, 132, 204);
 
-        // Draw the WHOLE downloaded image onto the Chest Area
         if (sourceBitmap != null) {
             canvas.drawBitmap(sourceBitmap, null, chestRect, null);
         }
@@ -220,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // -------------------------------------------------------------------------
-    // LOGIC 2: SHIRTS & PANTS (Template -> Cut & Paste)
+    // LOGIC 2: SHIRTS & PANTS (Fix Applied Here!)
     // -------------------------------------------------------------------------
     private Bitmap processRobloxTemplate(Bitmap sourceBitmap) {
         Bitmap finalTexture = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888);
@@ -229,13 +224,24 @@ public class MainActivity extends AppCompatActivity {
 
         int scale = 1;
         Side[] sides = Side.values();
-        Part[] parts = {Part.BODY, Part.LEFT_ARM, Part.RIGHT_ARM, Part.LEFT_LEG, Part.RIGHT_LEG};
+        Part[] parts;
+
+        // [FIX] અહીં આપણે નક્કી કરીએ છીએ કે શું પહેરાવવું છે
+        if (currentCategory.equals("pants")) {
+            // જો PANTS હોય: તો માત્ર બોડી અને પગ (Arms નહીં)
+            parts = new Part[]{Part.BODY, Part.LEFT_LEG, Part.RIGHT_LEG};
+        } else {
+            // જો SHIRTS હોય: તો માત્ર બોડી અને હાથ (Legs નહીં)
+            // આનાથી શર્ટનું કપડું પગ પર કે બીજી જગ્યાએ નહીં જાય
+            parts = new Part[]{Part.BODY, Part.LEFT_ARM, Part.RIGHT_ARM};
+        }
 
         for (Part part : parts) {
             for (Side side : sides) {
                 Rect srcRect = getSourceRect(part, side, scale);
                 Rect dstRect = getDestRect(part, side, scale);
 
+                // Check works to avoid crashes
                 if (srcRect.width() > 0 && dstRect.width() > 0) {
                     drawPart(canvas, sourceBitmap, srcRect, dstRect);
                 }
@@ -362,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchProducts(String category) {
-        // [FIX] Update the category so we know what we are downloading
+        // [IMPORTANT] કેટેગરી અપડેટ કરવી જરૂરી છે જેથી આપણે નક્કી કરી શકીએ કે કઈ લોજિક વાપરવી
         this.currentCategory = category;
 
         progressBar.setVisibility(View.VISIBLE);
