@@ -231,7 +231,7 @@ public final class CameraController implements Camera.Controller, EventListener,
                     float max = Math.max(screen.getWidth(), screen.getHeight());
                     dx1 = (float) (dx1 / max * Math.PI * 2);
                     dy1 = (float) (dy1 / max * Math.PI * 2);
-                    handler.move(dx1, dy1);
+                    handler.move(dx1, dy1, -10f);
                     break;
                 case ROTATE:
                     float rotation = touchEvent.getAngle();

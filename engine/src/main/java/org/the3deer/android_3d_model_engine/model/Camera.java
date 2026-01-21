@@ -25,7 +25,7 @@ public class Camera {
      */
     public interface Controller {
 
-        default void move(float dX, float dY) {
+        default void move(float dX, float dY, float v) {
         }
 
         default void zoom(float direction) {
@@ -154,7 +154,7 @@ public class Camera {
 
     public void move(float dX, float dY) {
         if (controller != null)
-            controller.move(dX, dY);
+            controller.move(dX, dY, -10f);
     }
 
     public void zoom(float direction) {

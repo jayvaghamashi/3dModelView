@@ -244,4 +244,7 @@ public class ModelFragment extends Fragment {
         final View decorView = getActivity().getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
     }
+
+
+
 }

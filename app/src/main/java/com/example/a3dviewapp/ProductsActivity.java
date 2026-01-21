@@ -1,3 +1,4 @@
+/*
 package com.example.a3dviewapp;
 
 import android.content.Intent;
@@ -80,7 +81,6 @@ public class ProductsActivity extends AppCompatActivity {
         adapter = new ProductAdapter(this, filteredProducts, new ProductAdapter.OnProductClickListener() {
             @Override
             public void onProductClick(Product product) {
-                Intent intent = new Intent(ProductsActivity.this, RealTextureActivity.class);
                 intent.putExtra("product_id", product.getId());
                 intent.putExtra("product_name", product.getTitle());
                 intent.putExtra("product_type", product.getType());
@@ -189,4 +189,4 @@ public class ProductsActivity extends AppCompatActivity {
             }
         }
     }
-}
+}*/

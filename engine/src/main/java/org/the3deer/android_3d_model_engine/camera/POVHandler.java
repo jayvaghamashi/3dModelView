@@ -39,7 +39,7 @@ public class POVHandler implements CameraController.Handler {
     }
 
     @Override
-    public void move(float dX, float dY) {
+    public void move(float dX, float dY, float v) {
 
         if (dX == 0 && dY == 0) return;
 

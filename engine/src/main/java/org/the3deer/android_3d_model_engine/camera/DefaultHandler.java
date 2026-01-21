@@ -41,7 +41,7 @@ public class DefaultHandler implements CameraController.Handler {
     }
 
     @Override
-    public void move(float dX, float dY) {
+    public void move(float dX, float dY, float v) {
         translateCameraImpl(dX, dY);
     }
 

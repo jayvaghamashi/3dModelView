@@ -62,7 +62,7 @@ public class OrthographicHandler implements CameraController.Handler {
     }
 
     @Override
-    public synchronized void move(float dX, float dY) {
+    public synchronized void move(float dX, float dY, float v) {
 
         Log.v("OrthographicCamera","translating..");
         float dXabs = Math.abs(dX);

@@ -74,7 +74,7 @@ public class IsometricHandler implements CameraController.Handler {
     }
 
     @Override
-    public synchronized void move(float dX, float dY) {
+    public synchronized void move(float dX, float dY, float v) {
         float dXabs2 = Math.abs(dX);
         float dYabs2 = Math.abs(dY);
         if (dXabs2 > dYabs2 && dX < 0) {
