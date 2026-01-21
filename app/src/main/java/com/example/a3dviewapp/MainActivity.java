@@ -1,6 +1,14 @@
 package com.example.a3dviewapp;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -20,7 +28,10 @@ import com.example.a3dviewapp.model.Product;
 import com.example.a3dviewapp.network.ApiClient;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
+// Engine Imports
 import org.the3deer.android_3d_model_engine.ModelEngine;
 import org.the3deer.android_3d_model_engine.ModelFragment;
 import org.the3deer.android_3d_model_engine.ModelViewModel;
@@ -51,6 +62,15 @@ public class MainActivity extends AppCompatActivity {
     private List<Product> allProducts = new ArrayList<>();
     private List<Product> filteredProducts = new ArrayList<>();
 
+    private Target textureTarget;
+
+    // [FIX] Track which category is selected so we know how to process the image
+    private String currentCategory = "tshirts";
+
+    // --- MAPPING ENUMS ---
+    public enum Part { BODY, LEFT_ARM, RIGHT_ARM, LEFT_LEG, RIGHT_LEG }
+    public enum Side { FRONT, BACK, LEFT, RIGHT, UP, DOWN }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
         setupClickListeners();
         setupSearch();
 
-        // Default Load
         update3DView("models/man.dae");
         fetchProducts("tshirts");
     }
@@ -84,53 +103,227 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void update3DView(String modelPath) {
+        if (modelViewModel != null) {
+            modelViewModel.setModelEngine(null);
+        }
+
         String uri = "android://com.example.a3dviewapp/assets/" + modelPath;
         ModelFragment fragment = ModelFragment.newInstance(uri, null, false);
+
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.model_container, fragment)
                 .commit();
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> fixModelVisuals(), 1500);
     }
 
-    private void setupRecyclerView() {
-        productsRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        adapter = new ProductAdapter(this, filteredProducts, new ProductAdapter.OnProductClickListener() {
-            @Override
-            public void onProductClick(Product product) {
-                applyTextureToModel(product.getActualImageUrl());
-            }
-            @Override public void onFavoriteClick(Product p, boolean fav) {}
-            @Override public void onAddToCart(Product p) {}
-        });
-        productsRecyclerView.setAdapter(adapter);
+    private void fixModelVisuals() {
+        ModelEngine engine = modelViewModel.getModelEngine().getValue();
+        if (engine == null) return;
+
+        Scene scene = engine.getBeanFactory().find(Scene.class);
+        if (scene == null) return;
+
+        scene.setLightProfile(Scene.LightProfile.PointOfView);
+
+        if (!scene.getObjects().isEmpty()) {
+            Object3DData model = scene.getObjects().get(0);
+            model.setChanged(true);
+        }
     }
+
+    // -------------------------------------------------------------------------
+    // TEXTURE APPLICATION
+    // -------------------------------------------------------------------------
 
     private void applyTextureToModel(String textureUrl) {
         ModelEngine engine = modelViewModel.getModelEngine().getValue();
-        if (engine != null) {
-            Scene scene = engine.getBeanFactory().find(Scene.class);
-            if (scene != null && !scene.getObjects().isEmpty()) {
-                Object3DData model = scene.getObjects().get(0);
+        if (engine == null) {
+            Toast.makeText(this, "Please wait, model loading...", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-                Texture newTexture = new Texture();
-                newTexture.setFile(textureUrl);
+        Toast.makeText(this, "Applying " + currentCategory + "...", Toast.LENGTH_SHORT).show();
 
-                // Set on main material
-                if (model.getMaterial() != null) {
-                    model.getMaterial().setColorTexture(newTexture);
-                }
+        textureTarget = new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap downloadedBitmap, Picasso.LoadedFrom from) {
+                try {
+                    Bitmap processedBitmap;
 
-                // Set on all sub-parts (Elements)
-                if (model.getElements() != null) {
-                    for (Element e : model.getElements()) {
-                        if (e.getMaterial() != null) {
-                            e.getMaterial().setColorTexture(newTexture);
-                        }
+                    // [FIX] Choose logic based on category
+                    if (currentCategory.equals("tshirts")) {
+                        // T-Shirts are just one image on the chest
+                        processedBitmap = processTShirtTexture(downloadedBitmap);
+                    } else {
+                        // Shirts/Pants are full templates that need cutting
+                        processedBitmap = processRobloxTemplate(downloadedBitmap);
                     }
+
+                    Scene scene = engine.getBeanFactory().find(Scene.class);
+                    if (scene != null && !scene.getObjects().isEmpty()) {
+                        Object3DData model = scene.getObjects().get(0);
+
+                        Texture newTexture = new Texture();
+                        newTexture.setBitmap(processedBitmap);
+
+                        if (model.getElements() != null) {
+                            for (Element e : model.getElements()) {
+                                // Apply only to the body geometry
+                                if (e.getId().equalsIgnoreCase("geometry1")) {
+                                    if (e.getMaterial() != null) {
+                                        e.getMaterial().setColorTexture(newTexture);
+                                    }
+                                }
+                            }
+                        }
+
+                        model.setChanged(true);
+                        Toast.makeText(MainActivity.this, "Applied!", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                model.setChanged(true); // Redraw
-                Toast.makeText(this, "Texture Loading...", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                Toast.makeText(MainActivity.this, "Download Failed", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) { }
+        };
+
+        Picasso.get().load(textureUrl).into(textureTarget);
+    }
+
+    // -------------------------------------------------------------------------
+    // LOGIC 1: T-SHIRTS (Single Image -> Chest Only)
+    // -------------------------------------------------------------------------
+    private Bitmap processTShirtTexture(Bitmap sourceBitmap) {
+        // Create standard canvas
+        Bitmap finalTexture = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(finalTexture);
+        canvas.drawColor(Color.WHITE); // Default Body Color
+
+        // Calculate where the "Front Chest" is on the texture map
+        // Based on getDestRect(Part.BODY, Side.FRONT, 1) -> Rect(0, 72, 132, 204)
+        Rect chestRect = new Rect(0, 72, 132, 204);
+
+        // Draw the WHOLE downloaded image onto the Chest Area
+        if (sourceBitmap != null) {
+            canvas.drawBitmap(sourceBitmap, null, chestRect, null);
+        }
+
+        return finalTexture;
+    }
+
+    // -------------------------------------------------------------------------
+    // LOGIC 2: SHIRTS & PANTS (Template -> Cut & Paste)
+    // -------------------------------------------------------------------------
+    private Bitmap processRobloxTemplate(Bitmap sourceBitmap) {
+        Bitmap finalTexture = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(finalTexture);
+        canvas.drawColor(Color.WHITE);
+
+        int scale = 1;
+        Side[] sides = Side.values();
+        Part[] parts = {Part.BODY, Part.LEFT_ARM, Part.RIGHT_ARM, Part.LEFT_LEG, Part.RIGHT_LEG};
+
+        for (Part part : parts) {
+            for (Side side : sides) {
+                Rect srcRect = getSourceRect(part, side, scale);
+                Rect dstRect = getDestRect(part, side, scale);
+
+                if (srcRect.width() > 0 && dstRect.width() > 0) {
+                    drawPart(canvas, sourceBitmap, srcRect, dstRect);
+                }
             }
         }
+        return finalTexture;
+    }
+
+    private void drawPart(Canvas canvas, Bitmap source, Rect src, Rect dst) {
+        try {
+            if (src.left >= 0 && src.top >= 0 && src.right <= source.getWidth() && src.bottom <= source.getHeight()) {
+                Bitmap piece = Bitmap.createBitmap(source, src.left, src.top, src.width(), src.height());
+                canvas.drawBitmap(piece, null, dst, null);
+            }
+        } catch (Exception e) {}
+    }
+
+    // --- COORDINATES ---
+    private Rect getSourceRect(Part part, Side side, int i) {
+        if (part == Part.BODY) {
+            if (side == Side.FRONT) return new Rect(i * 229, i * 72, i * 229 + (i * 132), i * 72 + (i * 132));
+            if (side == Side.LEFT)  return new Rect(i * 361, i * 72, i * 361 + (i * 66), i * 72 + (i * 132));
+            if (side == Side.BACK)  return new Rect(i * 427, i * 72, i * 427 + (i * 129), i * 72 + (i * 132));
+            if (side == Side.RIGHT) return new Rect(i * 165, i * 72, i * 165 + (i * 64), i * 72 + (i * 132));
+            if (side == Side.UP)    return new Rect(i * 229, i * 8,  i * 229 + (i * 32), i * 8 + (i * 64));
+            if (side == Side.DOWN)  return new Rect(i * 229, i * 204, i * 229 + (i * 132), i * 204 + (i * 64));
+        }
+        if (part == Part.RIGHT_ARM || part == Part.RIGHT_LEG) {
+            if (side == Side.FRONT) return new Rect(i * 215, i * 353, i * 215 + (i * 64), i * 353 + (i * 132));
+            if (side == Side.LEFT)  return new Rect(i * 19,  i * 353, i * 19 + (i * 66),  i * 353 + (i * 132));
+            if (side == Side.BACK)  return new Rect(i * 85,  i * 353, i * 85 + (i * 64),  i * 353 + (i * 132));
+            if (side == Side.RIGHT) return new Rect(i * 149, i * 353, i * 149 + (i * 68), i * 353 + (i * 132));
+            if (side == Side.UP)    return new Rect(i * 215, i * 289, i * 215 + (i * 68), i * 289 + (i * 64));
+            if (side == Side.DOWN)  return new Rect(i * 215, i * 485, i * 215 + (i * 68), i * 485 + (i * 64));
+        }
+        if (part == Part.LEFT_ARM || part == Part.LEFT_LEG) {
+            if (side == Side.FRONT) return new Rect(i * 307, i * 353, i * 307 + (i * 64), i * 353 + (i * 132));
+            if (side == Side.LEFT)  return new Rect(i * 375, i * 353, i * 375 + (i * 66), i * 353 + (i * 132));
+            if (side == Side.BACK)  return new Rect(i * 441, i * 353, i * 441 + (i * 64), i * 353 + (i * 132));
+            if (side == Side.RIGHT) return new Rect(i * 505, i * 353, i * 505 + (i * 68), i * 353 + (i * 132));
+            if (side == Side.UP)    return new Rect(i * 307, i * 289, i * 307 + (i * 68), i * 289 + (i * 64));
+            if (side == Side.DOWN)  return new Rect(i * 307, i * 485, i * 307 + (i * 68), i * 485 + (i * 64));
+        }
+        return new Rect(0, 0, 0, 0);
+    }
+
+    private Rect getDestRect(Part part, Side side, int i) {
+        if (part == Part.BODY) {
+            if (side == Side.FRONT) return new Rect(0, i * 72, i * 132, i * 72 + (i * 132));
+            if (side == Side.LEFT)  return new Rect(i * 132, i * 72, i * 132 + (i * 66), i * 72 + (i * 132));
+            if (side == Side.BACK)  return new Rect(i * 198, i * 72, i * 198 + (i * 129), i * 72 + (i * 132));
+            if (side == Side.RIGHT) return new Rect(i * 327, i * 72, i * 327 + (i * 64), i * 72 + (i * 132));
+            if (side == Side.UP)    return new Rect(0, i * 8, i * 132, i * 8 + (i * 64));
+            if (side == Side.DOWN)  return new Rect(0, i * 204, i * 132, i * 204 + (i * 64));
+        }
+        if (part == Part.LEFT_ARM) {
+            if (side == Side.FRONT) return new Rect(i * 564, i * 64, i * 564 + (i * 64), i * 64 + (i * 112));
+            if (side == Side.LEFT)  return new Rect(i * 628, i * 64, i * 628 + (i * 66), i * 64 + (i * 112));
+            if (side == Side.BACK)  return new Rect(i * 694, i * 64, i * 694 + (i * 64), i * 64 + (i * 112));
+            if (side == Side.RIGHT) return new Rect(i * 496, i * 64, i * 496 + (i * 68), i * 64 + (i * 112));
+            if (side == Side.UP)    return new Rect(i * 496, 0, i * 496 + (i * 68), i * 64);
+            if (side == Side.DOWN)  return new Rect(i * 692, i * 215, i * 692 + (i * 68), i * 215 + (i * 64));
+        }
+        if (part == Part.RIGHT_ARM) {
+            if (side == Side.FRONT) return new Rect(i * 828, i * 64, i * 828 + (i * 64), i * 64 + (i * 112));
+            if (side == Side.LEFT)  return new Rect(i * 892, i * 64, i * 892 + (i * 66), i * 64 + (i * 112));
+            if (side == Side.BACK)  return new Rect(i * 958, i * 64, i * 958 + (i * 64), i * 64 + (i * 112));
+            if (side == Side.RIGHT) return new Rect(i * 760, i * 64, i * 760 + (i * 68), i * 64 + (i * 112));
+            if (side == Side.UP)    return new Rect(i * 760, 0, i * 760 + (i * 68), i * 64);
+            if (side == Side.DOWN)  return new Rect(i * 956, i * 215, i * 956 + (i * 68), i * 215 + (i * 64));
+        }
+        if (part == Part.LEFT_LEG) {
+            if (side == Side.FRONT) return new Rect(i * 564, i * 348, i * 564 + (i * 64), i * 348 + (i * 112));
+            if (side == Side.LEFT)  return new Rect(i * 628, i * 348, i * 628 + (i * 66), i * 348 + (i * 112));
+            if (side == Side.BACK)  return new Rect(i * 694, i * 348, i * 694 + (i * 64), i * 348 + (i * 112));
+            if (side == Side.RIGHT) return new Rect(i * 496, i * 348, i * 496 + (i * 68), i * 348 + (i * 112));
+            if (side == Side.UP)    return new Rect(i * 496, i * 284, i * 496 + (i * 68), i * 284 + (i * 64));
+            if (side == Side.DOWN)  return new Rect(i * 692, i * 499, i * 692 + (i * 68), i * 499 + (i * 64));
+        }
+        if (part == Part.RIGHT_LEG) {
+            if (side == Side.FRONT) return new Rect(i * 828, i * 348, i * 828 + (i * 64), i * 348 + (i * 112));
+            if (side == Side.LEFT)  return new Rect(i * 892, i * 348, i * 892 + (i * 66), i * 348 + (i * 112));
+            if (side == Side.BACK)  return new Rect(i * 958, i * 348, i * 958 + (i * 64), i * 348 + (i * 112));
+            if (side == Side.RIGHT) return new Rect(i * 760, i * 348, i * 760 + (i * 68), i * 348 + (i * 112));
+            if (side == Side.UP)    return new Rect(i * 760, i * 284, i * 760 + (i * 68), i * 284 + (i * 64));
+            if (side == Side.DOWN)  return new Rect(i * 956, i * 499, i * 956 + (i * 68), i * 499 + (i * 64));
+        }
+        return new Rect(0, 0, 0, 0);
     }
 
     private void setupClickListeners() {
@@ -154,7 +347,24 @@ public class MainActivity extends AppCompatActivity {
         chipPants.setOnClickListener(v -> fetchProducts("pants"));
     }
 
+    private void setupRecyclerView() {
+        productsRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        adapter = new ProductAdapter(this, filteredProducts, new ProductAdapter.OnProductClickListener() {
+            @Override
+            public void onProductClick(Product product) {
+                applyTextureToModel(product.getActualImageUrl());
+            }
+
+            @Override public void onFavoriteClick(Product p, boolean fav) {}
+            @Override public void onAddToCart(Product p) {}
+        });
+        productsRecyclerView.setAdapter(adapter);
+    }
+
     private void fetchProducts(String category) {
+        // [FIX] Update the category so we know what we are downloading
+        this.currentCategory = category;
+
         progressBar.setVisibility(View.VISIBLE);
         ApiClient.ProductRequest request = new ApiClient.ProductRequest(category, "1", "28");
         ApiClient.getClient().create(ApiClient.ApiInterface.class).getProducts(request).enqueue(new Callback<ApiResponse>() {
@@ -168,7 +378,9 @@ public class MainActivity extends AppCompatActivity {
                     adapter.updateData(filteredProducts);
                 }
             }
-            @Override public void onFailure(Call<ApiResponse> call, Throwable t) {
+
+            @Override
+            public void onFailure(Call<ApiResponse> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
             }
         });
@@ -181,7 +393,8 @@ public class MainActivity extends AppCompatActivity {
             @Override public void afterTextChanged(Editable s) {
                 filteredProducts.clear();
                 for (Product p : allProducts) {
-                    if (p.getTitle().toLowerCase().contains(s.toString().toLowerCase())) filteredProducts.add(p);
+                    if (p.getTitle().toLowerCase().contains(s.toString().toLowerCase()))
+                        filteredProducts.add(p);
                 }
                 adapter.updateData(filteredProducts);
             }

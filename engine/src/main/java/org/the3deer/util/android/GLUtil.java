@@ -117,6 +117,8 @@ public final class GLUtil {
 
         final Bitmap bitmap = AndroidUtils.decodeBitmap(is);
         int ret = loadTexture(bitmap);
+        // It is safe to recycle here because we created this specific bitmap instance
+        // just for this method call.
         bitmap.recycle();
 
         return ret;
@@ -140,7 +142,11 @@ public final class GLUtil {
         GLUtil.checkGlError("glBindTexture");
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
         GLUtil.checkGlError("texImage2D");
-        bitmap.recycle();
+
+        // [FIX] REMOVED bitmap.recycle() here.
+        // We do NOT recycle the bitmap here because it might be needed again
+        // or managed by an external library (like Picasso).
+
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_REPEAT);
