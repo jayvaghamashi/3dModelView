@@ -361,8 +361,7 @@ public class MainActivity extends AppCompatActivity {
                 applyTextureToModel(product.getActualImageUrl());
             }
 
-            @Override public void onFavoriteClick(Product p, boolean fav) {}
-            @Override public void onAddToCart(Product p) {}
+
         });
         productsRecyclerView.setAdapter(adapter);
     }
