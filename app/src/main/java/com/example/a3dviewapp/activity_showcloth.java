@@ -36,7 +36,7 @@ public class activity_showcloth extends AppCompatActivity {
         Intent intent = getIntent();
            category = intent.getStringExtra("CATEGORY");
         if (category == null) {
-            category = "T-shirts";
+            category = "tshirts";
         }
         int backgroundRes = intent.getIntExtra("BACKGROUND_RES", R.drawable.t_shirtpink);
 
@@ -96,7 +96,7 @@ public class activity_showcloth extends AppCompatActivity {
     private void openClothDetailsActivity(String category, String subCategory) {
         // Cloth details activity માટે
          Intent intent = new Intent(this, MainActivity.class);
-        // intent.putExtra("CATEGORY", category);
+         intent.putExtra("CATEGORY", category);
         // intent.putExtra("SUB_CATEGORY", subCategory);
          startActivity(intent);
 

@@ -95,17 +95,17 @@ public class activity_home extends AppCompatActivity {
         int containerId = container.getId();
 
         if (containerId == R.id.containerTShirts) {
-            selectedItemName = "T-shirts";
+            selectedItemName = "tshirts";
             selectedBackgroundRes = R.drawable.t_shirtpink;
-            openShowActivity("T-shirts");
+            openShowActivity("tshirts");
         } else if (containerId == R.id.containerShirt) {
-            selectedItemName = "Shirts";
+            selectedItemName = "shirts";
             selectedBackgroundRes = R.drawable.shirt;
-            openShowActivity("Shirts");
+            openShowActivity("shirts");
         } else if (containerId == R.id.containerpant) {
-            selectedItemName = "Pants";
+            selectedItemName = "pants";
             selectedBackgroundRes = R.drawable.pant;
-            openShowActivity("Pants");
+            openShowActivity("pants");
         } else if (containerId == R.id.containerSetting) {
             selectedItemName = "Settings";
             selectedBackgroundRes = R.drawable.setting;

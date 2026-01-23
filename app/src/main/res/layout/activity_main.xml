@@ -15,23 +15,128 @@
         <FrameLayout
             android:id="@+id/model_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent" >
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabZoomIn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone"
+                android:backgroundTint="@color/white"
+                app:fabSize="mini"
+
+                />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabZoomOut"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:backgroundTint="@color/white"
+                app:fabSize="mini" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:padding="8dp"
+            android:layout_marginTop="220dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintTop_toTopOf="parent">
 
-            <Button android:id="@+id/btnGirl" android:layout_width="80dp" android:layout_height="40dp" android:text="Girl" android:textSize="10sp" android:layout_marginBottom="4dp"/>
-            <Button android:id="@+id/btnMan" android:layout_width="80dp" android:layout_height="40dp" android:text="Man" android:textSize="10sp" android:layout_marginBottom="4dp"/>
-            <Button android:id="@+id/btnRounded" android:layout_width="80dp" android:layout_height="40dp" android:text="Round" android:textSize="10sp" android:layout_marginBottom="4dp"/>
-            <Button android:id="@+id/btnRoblox" android:layout_width="80dp" android:layout_height="40dp" android:text="Roblox" android:textSize="10sp" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/btnRoblox"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_margin="5dp"
+                    android:padding="12dp"
+                    android:src="@drawable/women3"
+                    android:background="#F3F3F3"
+                    app:shapeAppearanceOverlay="@style/CircleImage"
+                    android:scaleType="centerInside" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Blocky"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/btnRounded"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_margin="5dp"
+                    android:padding="12dp"
+                    android:src="@drawable/women2"
+                    android:background="#F3F3F3"
+                    app:shapeAppearanceOverlay="@style/CircleImage"
+                    android:scaleType="centerInside" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Roundeed"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/btnMan"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_margin="5dp"
+                    android:padding="12dp"
+                    android:src="@drawable/women1"
+                    android:background="#F3F3F3"
+                    app:shapeAppearanceOverlay="@style/CircleImage"
+                    android:scaleType="centerInside" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Man"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/btnGirl"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_margin="5dp"
+                    android:padding="12dp"
+                    android:src="@drawable/women4"
+                    android:background="#F3F3F3"
+                    app:shapeAppearanceOverlay="@style/CircleImage"
+                    android:scaleType="centerInside" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Girl"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
         </LinearLayout>
-
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -40,20 +145,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fabZoomIn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                app:fabSize="mini"
-                app:srcCompat="@drawable/ic_zoom_in"/>
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fabZoomOut"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:fabSize="mini"
-                app:srcCompat="@drawable/ic_zoom_out"/>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 

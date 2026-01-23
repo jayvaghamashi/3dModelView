@@ -14,6 +14,7 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -51,7 +52,7 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
 
     private ModelViewModel modelViewModel;
-    private Button btnGirl, btnMan, btnRounded, btnRoblox;
+    private ImageView btnGirl, btnMan, btnRounded, btnRoblox;
     private FloatingActionButton fabZoomIn, fabZoomOut;
     private Chip chipTShirts, chipShirts, chipPants;
     private RecyclerView productsRecyclerView;
@@ -84,7 +85,15 @@ public class MainActivity extends AppCompatActivity {
         setupSearch();
 
         update3DView("models/man.dae");
-        fetchProducts("tshirts");
+
+        String categoryFromIntent = getIntent().getStringExtra("CATEGORY");
+        if (categoryFromIntent != null) {
+            currentCategory = categoryFromIntent;
+        } else {
+            currentCategory = "tshirts"; // default
+        }
+        fetchProducts(currentCategory);
+        //fetchProducts("tshirts");
     }
 
     private void initializeUI() {
@@ -348,9 +357,9 @@ public class MainActivity extends AppCompatActivity {
             if (e != null) e.getBeanFactory().find(CameraController.class).move(0, 0, 10f);
         });
 
-        chipTShirts.setOnClickListener(v -> fetchProducts("tshirts"));
-        chipShirts.setOnClickListener(v -> fetchProducts("shirts"));
-        chipPants.setOnClickListener(v -> fetchProducts("pants"));
+        chipTShirts.setOnClickListener(v -> fetchProducts(currentCategory));
+        chipShirts.setOnClickListener(v -> fetchProducts(currentCategory));
+        chipPants.setOnClickListener(v -> fetchProducts(currentCategory));
     }
 
     private void setupRecyclerView() {
