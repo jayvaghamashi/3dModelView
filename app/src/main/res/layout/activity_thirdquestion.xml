@@ -8,7 +8,6 @@
     android:background="@drawable/all_background"
     android:padding="8dp">
 
-    <!-- First Row - Blocky -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="0dp"
@@ -20,17 +19,22 @@
         android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineVertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/containerTShirts"
         android:layout_width="0dp"
         android:layout_height="170dp"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="60dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginTop="44dp"
+        android:layout_marginEnd="4dp"
         android:background="@drawable/card_state_selector"
         android:clickable="true"
         android:focusable="true"
@@ -40,19 +44,17 @@
 
         <ImageView
             android:id="@+id/imgBlocky1"
-            android:layout_width="75dp"
-            android:layout_height="79dp"
-            android:background="@drawable/circle_background"
+            android:layout_width="78dp"
+            android:layout_height="74dp"
+            android:padding="2dp"
             android:src="@drawable/woman9"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvBlocky1"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="12dp"
@@ -60,17 +62,17 @@
             android:textColor="#000000"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imgBlocky1" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- First Row - Rounded -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/containerShirt"
         android:layout_width="0dp"
         android:layout_height="170dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="60dp"
-        android:layout_marginEnd="5dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="44dp"
         android:background="@drawable/card_state_selector"
         android:clickable="true"
         android:focusable="true"
@@ -80,19 +82,17 @@
 
         <ImageView
             android:id="@+id/imgRounded1"
-            android:layout_width="75dp"
-            android:layout_height="79dp"
-            android:background="@drawable/circle_background"
+            android:layout_width="78dp"
+            android:layout_height="74dp"
+            android:padding="2dp"
             android:src="@drawable/women10"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvRounded1"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="12dp"
@@ -100,17 +100,17 @@
             android:textColor="#000000"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imgRounded1" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Second Row - Man -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/containerpant"
         android:layout_width="0dp"
         android:layout_height="170dp"
         android:layout_marginTop="20dp"
-        android:layout_marginStart="5dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="4dp"
         android:background="@drawable/card_state_selector"
         android:clickable="true"
         android:focusable="true"
@@ -120,19 +120,17 @@
 
         <ImageView
             android:id="@+id/imgMan"
-            android:layout_width="75dp"
-            android:layout_height="79dp"
-            android:background="@drawable/circle_background"
+            android:layout_width="78dp"
+            android:layout_height="74dp"
+            android:padding="2dp"
             android:src="@drawable/women11"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvMan"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="12dp"
@@ -140,17 +138,17 @@
             android:textColor="#000000"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imgMan" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Second Row - Girl -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/containerSetting"
         android:layout_width="0dp"
         android:layout_height="170dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="4dp"
         android:layout_marginTop="20dp"
-        android:layout_marginEnd="5dp"
         android:background="@drawable/card_state_selector"
         android:clickable="true"
         android:focusable="true"
@@ -160,19 +158,17 @@
 
         <ImageView
             android:id="@+id/imgGirl"
-            android:layout_width="75dp"
-            android:layout_height="79dp"
-            android:background="@drawable/circle_background"
+            android:layout_width="78dp"
+            android:layout_height="74dp"
+            android:padding="2dp"
             android:src="@drawable/women12"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvGirl"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="12dp"
@@ -180,17 +176,10 @@
             android:textColor="#000000"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imgGirl"
-            app:layout_constraintVertical_bias="0.483"
-            tools:layout_editor_absoluteX="0dp" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imgGirl" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guidelineVertical"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnNext"

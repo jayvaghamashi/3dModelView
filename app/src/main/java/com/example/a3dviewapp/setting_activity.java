@@ -1,13 +1,17 @@
 package com.example.a3dviewapp;
 
 import android.app.Dialog;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 public class setting_activity extends BaseActivity {
 
@@ -21,6 +25,44 @@ public class setting_activity extends BaseActivity {
 
         // Back button
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+
+
+        ConstraintLayout btnShare = findViewById(R.id.containershare);
+        ConstraintLayout btnRate = findViewById(R.id.containerrate);
+        ConstraintLayout btnPrivacy = findViewById(R.id.privacy);
+
+        btnShare.setOnClickListener(v -> {
+            String shareMessage = "Check out this awesome app: https://play.google.com/store/apps/details?id=" + getPackageName();
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "My App");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage);
+            startActivity(Intent.createChooser(shareIntent, "Share via"));
+        });
+
+// 2. Rate Us Logic
+        btnRate.setOnClickListener(v -> {
+            Uri uri = Uri.parse("market://details?id=" + getPackageName());
+            Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
+            // To count with Play Store backstack, we set these flags
+            goToMarket.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY |
+                    Intent.FLAG_ACTIVITY_NEW_DOCUMENT |
+                    Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+            try {
+                startActivity(goToMarket);
+            } catch (ActivityNotFoundException e) {
+                // If Play Store is not installed, open in browser
+                startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("http://play.google.com/store/apps/details?id=" + getPackageName())));
+            }
+        });
+
+// 3. Privacy Policy Logic
+        btnPrivacy.setOnClickListener(v -> {
+            String privacyUrl = "https://your-website.com/privacy-policy"; // Replace with your link
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(privacyUrl));
+            startActivity(browserIntent);
+        });
     }
 
     private void showModelListDialog() {

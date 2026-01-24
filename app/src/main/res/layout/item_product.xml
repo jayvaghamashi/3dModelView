@@ -1,35 +1,33 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="160dp"
-    android:layout_margin="4dp"
+<com.google.android.material.card.MaterialCardView android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/card_margin"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp"
-    app:cardUseCompatPadding="false">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/constarintlayout"
-        android:background="@drawable/clothbackground">
+        android:layout_width="190dp"
+        android:layout_height="160dp"
+        android:background="@drawable/clothbackground"
+        android:padding="8dp">
 
         <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/productImage"
-            android:layout_width="140dp"
-            android:layout_height="140dp"
-            android:scaleType="fitCenter"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:src="@drawable/shirt1"
-            android:layout_marginBottom="15dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            android:id="@+id/productImage"
+            android:layout_marginStart="10sp"
+            android:layout_marginEnd="10sp"
+            android:layout_marginTop="1sp"
+            android:layout_marginBottom="14dp"
+            android:scaleType="centerCrop"
             app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearanceOverlay="@style/CircleImageStyle"
-            app:strokeColor="#0000FF"
-            app:strokeWidth="2dp" />
-
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintDimensionRatio="1:1"
+            app:shapeAppearanceOverlay="@style/CircleImageStyle"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>
