@@ -2,28 +2,66 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background">
 
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/back_button_background"
+        android:padding="8dp"
+        android:src="@drawable/ic_back"
+        android:contentDescription="Back"
+        android:elevation="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/black" />
+
+
+    <ImageButton
+        android:id="@+id/btnDownload"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/back_button_background"
+        android:contentDescription="Download"
+        android:elevation="10dp"
+        android:padding="8dp"
+
+        android:src="@android:drawable/stat_sys_download"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.956"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/black" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/model_wrapper"
-        android:layout_width="match_parent"
+        android:layout_width="360dp"
         android:layout_height="320dp"
+        android:background="@drawable/model_background"
+        app:layout_constraintBottom_toBottomOf="@+id/header"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <FrameLayout
             android:id="@+id/model_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fabZoomIn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:visibility="gone"
                 android:backgroundTint="@color/white"
+                android:visibility="gone"
                 app:fabSize="mini"
 
                 />
@@ -32,17 +70,17 @@
                 android:id="@+id/fabZoomOut"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
                 android:backgroundTint="@color/white"
+                android:visibility="gone"
                 app:fabSize="mini" />
         </FrameLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="220dp"
             android:orientation="horizontal"
             android:padding="8dp"
-            android:layout_marginTop="220dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -51,18 +89,20 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
+
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/btnRoblox"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_margin="5dp"
+                    android:background="@drawable/circle_background"
                     android:padding="12dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/women3"
-                    android:background="#F3F3F3"
-                    app:shapeAppearanceOverlay="@style/CircleImage"
-                    android:scaleType="centerInside" />
+                    app:shapeAppearanceOverlay="@style/CircleImage" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -73,18 +113,20 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
+
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/btnRounded"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_margin="5dp"
-                    android:padding="12dp"
-                    android:src="@drawable/women2"
                     android:background="#F3F3F3"
-                    app:shapeAppearanceOverlay="@style/CircleImage"
-                    android:scaleType="centerInside" />
+                    android:padding="12dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/women2"
+                    app:shapeAppearanceOverlay="@style/CircleImage" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -95,18 +137,20 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
+
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/btnMan"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_margin="5dp"
-                    android:padding="12dp"
-                    android:src="@drawable/women1"
                     android:background="#F3F3F3"
-                    app:shapeAppearanceOverlay="@style/CircleImage"
-                    android:scaleType="centerInside" />
+                    android:padding="12dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/women1"
+                    app:shapeAppearanceOverlay="@style/CircleImage" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -117,18 +161,20 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical">
+
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/btnGirl"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_margin="5dp"
-                    android:padding="12dp"
-                    android:src="@drawable/women4"
                     android:background="#F3F3F3"
-                    app:shapeAppearanceOverlay="@style/CircleImage"
-                    android:scaleType="centerInside" />
+                    android:padding="12dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/women4"
+                    app:shapeAppearanceOverlay="@style/CircleImage" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -137,13 +183,14 @@
             </LinearLayout>
 
         </LinearLayout>
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:layout_margin="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -152,7 +199,7 @@
         android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/primary"
+        android:background="#7B94E0"
         android:orientation="vertical"
         android:padding="12dp"
         app:layout_constraintTop_toBottomOf="@id/model_wrapper">

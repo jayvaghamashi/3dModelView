@@ -37,6 +37,9 @@ public class GLSurfaceView extends android.opengl.GLSurfaceView {
             // Create an OpenGL ES 2.0 context.
             Log.d(TAG, "Creating OpenGL 3 surface...");
             setEGLContextClientVersion(3);
+            this.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha channel enable karva mate
+            this.getHolder().setFormat(android.graphics.PixelFormat.TRANSLUCENT); // Surface transparent karva
+            this.setZOrderOnTop(true); // Surface ne layout ni upar lavva mate
 
         } catch (Exception e) {
             Log.e(TAG, e.getMessage(), e);

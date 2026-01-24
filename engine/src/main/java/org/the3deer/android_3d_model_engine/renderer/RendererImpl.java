@@ -75,6 +75,7 @@ public class RendererImpl implements GLSurfaceView.Renderer, MenuAdapter, Prefer
     }
 
     public void setBackgroundColor(float[] backgroundColor) {
+
         this.backgroundColor = backgroundColor;
     }
 
@@ -99,6 +100,9 @@ public class RendererImpl implements GLSurfaceView.Renderer, MenuAdapter, Prefer
         subMenu.setGroupCheckable(MENU_GROUP_ID, true, true);
         return true;
     }
+
+
+    // Aa method ModelEngine.java ma add karo
 
     private void initSubMenu(){
         addItem(Constants.COLOR_WHITE, R.string.white);

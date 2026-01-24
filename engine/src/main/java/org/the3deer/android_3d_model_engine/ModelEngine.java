@@ -226,6 +226,15 @@ public class ModelEngine {
         beanFactory.add("80.gui.axis", Axis.class);
     }
 
+
+    // Aa method ModelEngine.java ma add karo
+    public void setBackgroundColor(float[] backgroundColor) {
+        RendererImpl renderer = beanFactory.find(RendererImpl.class);
+        if (renderer != null) {
+            renderer.setBackgroundColor(backgroundColor);
+        }
+    }
+
     /*@Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey, Context context, PreferenceScreen screen) {
 

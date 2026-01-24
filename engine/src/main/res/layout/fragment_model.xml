@@ -25,6 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
+        android:visibility="gone"
         android:src="@android:drawable/ic_menu_preferences"
         android:contentDescription="@string/preferences"
         android:layout_margin="16dp" />

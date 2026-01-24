@@ -76,7 +76,8 @@ public class Constants {
     public static final float[] COLOR_BLACK = {0, 0, 0, 1};
     public static final float[] COLOR_YELLOW = {1, 1, 0, 1};
     public static final float[] COLOR_NULL = {0, 0, 0, 0};
-    public static final float[] COLOR_GRAY = {0.5f, 0.5f, 0.5f, 1f};
+    // Have aa color tamaro 7B94E0 (Light Blue) bani jashe
+    public static final float[] COLOR_GRAY = {0f, 0f, 0f, 0f};
     public static final float[] COLOR_TRANSPARENT = {0f, 0f, 0f, 0f};
     public static final float[] COLOR_GRAY_TRANSLUCENT = {0.5f, 0.5f, 0.5f, 0.5f};
     public static final float[] COLOR_HALF_TRANSPARENT = {1f, 1f, 1f, 0.5f};

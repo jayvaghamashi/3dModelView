@@ -15,7 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 import java.util.Arrays;
 import java.util.List;
 
-public class activity_home extends AppCompatActivity {
+public class activity_home extends BaseActivity {
     private ConstraintLayout selectedContainer = null;
     private String selectedItemName = "";
     private int selectedBackgroundRes = 0;
@@ -139,7 +139,8 @@ public class activity_home extends AppCompatActivity {
     private void openSettingsActivity() {
         // Settings activity માટે અલગ activity
         Toast.makeText(this, "Opening Settings...", Toast.LENGTH_SHORT).show();
-        // Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(new Intent(activity_home.this,setting_activity.class));
+
         // startActivity(intent);
     }
 

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,101 +15,90 @@ import androidx.core.view.WindowInsetsCompat;
 import java.util.Arrays;
 import java.util.List;
 
-public class activity_showcloth extends AppCompatActivity {
-    private String category; // Class level variable
+public class activity_showcloth extends BaseActivity {
+    private String category;
+    private ConstraintLayout selectedContainer = null; // Home activity જેવું જ વેરીએબલ
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_showcloth);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.showactivity), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-
-
-        // Intent માંથી ડેટા મેળવો
         Intent intent = getIntent();
-           category = intent.getStringExtra("CATEGORY");
-        if (category == null) {
-            category = "tshirts";
-        }
-        int backgroundRes = intent.getIntExtra("BACKGROUND_RES", R.drawable.t_shirtpink);
+        category = intent.getStringExtra("CATEGORY");
+        if (category == null) category = "tshirts";
 
-        // Title સેટ કરો
         TextView tvTitle = findViewById(R.id.tvTitle);
         tvTitle.setText(category);
 
-        // ડિકલેર કરેલા વેરીએબલ
         List<ConstraintLayout> containers = Arrays.asList(
                 findViewById(R.id.containerTop),
                 findViewById(R.id.containerPopular),
                 findViewById(R.id.containerlatest)
         );
 
-        // ટેક્સ્ટ માં category ઉમેરો
-        TextView tvTop = findViewById(R.id.tvTshirt);
-        TextView tvPopular = findViewById(R.id.tvShirt);
-        TextView tvLatest = findViewById(R.id.tvPant);
+        // ટેક્સ્ટ સેટ કરો
+        ((TextView) findViewById(R.id.tvTshirt)).setText(category + " Top");
+        ((TextView) findViewById(R.id.tvShirt)).setText("Popular " + category);
+        ((TextView) findViewById(R.id.tvPant)).setText("Latest " + category);
 
-        tvTop.setText(category + " Top");
-        tvPopular.setText("Popular " + category);
-        tvLatest.setText("Latest " + category);
-
-        // દરેક કન્ટેઈનર માટે ક્લિક લિસનર
         for (int i = 0; i < containers.size(); i++) {
             final int index = i;
-            containers.get(i).setOnClickListener(new View.OnClickListener() {
+            final ConstraintLayout currentLayout = containers.get(i);
+
+            currentLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // અહીં તમે sub-category પસંદ કરેલ બાદ next activity માં જઈ શકો છો
+                    // Home Activity મુજબની ઇફેક્ટ
+                    handleContainerClick(currentLayout);
+
                     String subCategory;
                     switch (index) {
-                        case 0:
-                            subCategory = "Top";
-                            break;
-                        case 1:
-                            subCategory = "Popular";
-                            break;
-                        case 2:
-                            subCategory = "Latest";
-                            break;
-                        default:
-                            subCategory = "";
+                        case 0: subCategory = "Top"; break;
+                        case 1: subCategory = "Popular"; break;
+                        case 2: subCategory = "Latest"; break;
+                        default: subCategory = "";
                     }
-
                     openClothDetailsActivity(category, subCategory);
                 }
             });
         }
+    }
 
-        // Back button functionality (optional)
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    private void handleContainerClick(ConstraintLayout container) {
+        // ૧. જૂનું સિલેક્શન રીસેટ કરો (Alpha 1.0)
+        if (selectedContainer != null) {
+            selectedContainer.setSelected(false);
+            selectedContainer.setAlpha(1.0f);
         }
+
+        // ૨. નવું સિલેક્શન સેટ કરો (Alpha 0.8 - Home Activity મુજબ)
+        container.setSelected(true);
+        container.setAlpha(0.8f);
+        selectedContainer = container;
     }
 
     private void openClothDetailsActivity(String category, String subCategory) {
-        // Cloth details activity માટે
-         Intent intent = new Intent(this, MainActivity.class);
-         intent.putExtra("CATEGORY", category);
-        // intent.putExtra("SUB_CATEGORY", subCategory);
-         startActivity(intent);
-
-        // For now show toast
-        Toast.makeText(
-                this,
-                "Selected: " + category + " - " + subCategory,
-                Toast.LENGTH_SHORT
-        ).show();
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("CATEGORY", category);
+        startActivity(intent);
     }
 
     @Override
-    public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return true;
+    protected void onResume() {
+        super.onResume();
+        // પાછા ફરો ત્યારે ઇફેક્ટ કાઢી નાખવા માટે
+        if (selectedContainer != null) {
+            selectedContainer.setAlpha(1.0f);
+            selectedContainer.setSelected(false);
+            selectedContainer = null;
+        }
     }
 }

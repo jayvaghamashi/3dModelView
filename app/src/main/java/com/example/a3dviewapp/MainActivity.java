@@ -1,11 +1,19 @@
 package com.example.a3dviewapp;
 
+import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,11 +22,16 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -49,10 +62,11 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
-
+public class MainActivity extends BaseActivity {
+    private String lastAppliedTextureUrl = "";
+    private AlertDialog internetDialog;
     private ModelViewModel modelViewModel;
-    private ImageView btnGirl, btnMan, btnRounded, btnRoblox;
+    private ImageView btnGirl, btnMan, btnRounded, btnRoblox ,btnback;
     private FloatingActionButton fabZoomIn, fabZoomOut;
     private Chip chipTShirts, chipShirts, chipPants;
     private RecyclerView productsRecyclerView;
@@ -68,6 +82,8 @@ public class MainActivity extends AppCompatActivity {
     // Track category to decide mapping logic
     private String currentCategory = "tshirts";
 
+    private boolean doubleBackToExitPressedOnce = false;
+
     // --- MAPPING ENUMS ---
     public enum Part { BODY, LEFT_ARM, RIGHT_ARM, LEFT_LEG, RIGHT_LEG }
     public enum Side { FRONT, BACK, LEFT, RIGHT, UP, DOWN }
@@ -77,14 +93,62 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        modelViewModel = new ViewModelProvider(this).get(ModelViewModel.class);
 
+        // --- Have aa Callback add karo (Double Tap logic sathe) ---
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+
+            @Override
+            public void handleOnBackPressed() {
+
+                if (doubleBackToExitPressedOnce) {
+                    showExitDialog(); // second tap → dialog
+                    return;
+                }
+
+                // first tap
+                doubleBackToExitPressedOnce = true;
+                //startActivity(new Intent(MainActivity.this,activity_showcloth.class));
+                Toast.makeText(MainActivity.this,
+                        "Please click BACK again to exit",
+                        Toast.LENGTH_SHORT).show();
+
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    doubleBackToExitPressedOnce = false;
+                }, 2000);
+            }
+        });
+
+
+        modelViewModel = new ViewModelProvider(this).get(ModelViewModel.class);
+        //showExitDialog();
+        //registerNetworkCallback();
         initializeUI();
         setupRecyclerView();
         setupClickListeners();
         setupSearch();
+        btnback = findViewById(R.id.btnBack);
+        btnback.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
-        update3DView("models/man.dae");
+                startActivity(new Intent(MainActivity.this,activity_showcloth.class));
+            }
+        });
+
+
+        ImageButton btnDownload = findViewById(R.id.btnDownload);
+        btnDownload.setOnClickListener(v -> {
+            if (!lastAppliedTextureUrl.isEmpty()) {
+                Intent intent = new Intent(MainActivity.this, activity_share.class);
+                intent.putExtra("IMAGE_URL", lastAppliedTextureUrl); // Texture URL pass karo
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "Please select a cloth first!", Toast.LENGTH_SHORT).show();
+            }
+        });
+        String defaultModel = getSharedPreferences("ModelPrefs", MODE_PRIVATE)
+                .getString("default_model", "models/man.dae");
+        update3DView(defaultModel);
 
         String categoryFromIntent = getIntent().getStringExtra("CATEGORY");
         if (categoryFromIntent != null) {
@@ -95,6 +159,73 @@ public class MainActivity extends AppCompatActivity {
         fetchProducts(currentCategory);
         //fetchProducts("tshirts");
     }
+
+    private void registerNetworkCallback() {
+        try {
+            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkRequest networkRequest = new NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build();
+
+            connectivityManager.registerNetworkCallback(networkRequest, new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(@NonNull Network network) {
+                    // Jyare internet pachu ave tyare popup bandh kari dyo
+                    runOnUiThread(() -> {
+                        if (internetDialog != null && internetDialog.isShowing()) {
+                            internetDialog.dismiss();
+                        }
+                    });
+                }
+
+                @Override
+                public void onLost(@NonNull Network network) {
+                    // Jyare internet jay tyare popup batavo
+                    runOnUiThread(() -> showNoInternetDialog());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showNoInternetDialog() {
+        if (internetDialog != null && internetDialog.isShowing()) return;
+
+        internetDialog = new AlertDialog.Builder(MainActivity.this)
+                .setTitle("No Internet Connection")
+                .setMessage("Please check your internet settings and try again.")
+                .setCancelable(false) // User dialog bandh na kari shake jya sudhi net na ave
+                .setPositiveButton("Settings", (dialog, which) -> {
+                    startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
+                })
+                .create();
+        internetDialog.show();
+    }
+    private void showExitDialog() {
+
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_exit);
+        dialog.setCancelable(false);
+
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        Button btnYes = dialog.findViewById(R.id.btnYes);
+        Button btnNo = dialog.findViewById(R.id.btnNo);
+        ImageView btnBack = dialog.findViewById(R.id.btnBack);
+
+        btnYes.setOnClickListener(v -> {
+            dialog.dismiss();
+            finishAffinity(); // FULL APP EXIT
+        });
+
+        btnNo.setOnClickListener(v -> dialog.dismiss());
+
+        btnBack.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
 
     private void initializeUI() {
         btnGirl = findViewById(R.id.btnGirl);
@@ -111,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
         searchBar = findViewById(R.id.searchBar);
     }
 
+
     private void update3DView(String modelPath) {
         if (modelViewModel != null) {
             modelViewModel.setModelEngine(null);
@@ -123,12 +255,22 @@ public class MainActivity extends AppCompatActivity {
                 .replace(R.id.model_container, fragment)
                 .commit();
 
+        getSupportFragmentManager().executePendingTransactions();
+
+        Fragment f = getSupportFragmentManager().findFragmentById(R.id.model_container);
+        if (f instanceof ModelFragment) {
+            ((ModelFragment) f).setBackEnabled(false);
+        }
+
+
         new Handler(Looper.getMainLooper()).postDelayed(() -> fixModelVisuals(), 1500);
     }
 
     private void fixModelVisuals() {
         ModelEngine engine = modelViewModel.getModelEngine().getValue();
         if (engine == null) return;
+
+        engine.setBackgroundColor(new float[]{0.0f, 0.0f, 0.0f, 0.0f});
 
         Scene scene = engine.getBeanFactory().find(Scene.class);
         if (scene == null) return;
@@ -146,6 +288,7 @@ public class MainActivity extends AppCompatActivity {
     // -------------------------------------------------------------------------
 
     private void applyTextureToModel(String textureUrl) {
+        this.lastAppliedTextureUrl = textureUrl; // Aa line add karo
         ModelEngine engine = modelViewModel.getModelEngine().getValue();
         if (engine == null) {
             Toast.makeText(this, "Please wait, model loading...", Toast.LENGTH_SHORT).show();
@@ -413,5 +556,7 @@ public class MainActivity extends AppCompatActivity {
                 adapter.updateData(filteredProducts);
             }
         });
+
+
     }
 }
