@@ -202,9 +202,9 @@ public class ModelEngine {
         beanFactory.add("30.renderer3.sceneRenderer", SceneRenderer.class);
 
         // debuggers
-        beanFactory.add("50.renderer4.boundingBoxDrawer", BoundingBoxRenderer.class);
-        beanFactory.add("50.renderer5.wireframeDrawer", WireframeRenderer.class);
-        beanFactory.add("50.renderer6.skeleton", SkeletonRenderer.class);
+        //beanFactory.add("50.renderer4.boundingBoxDrawer", BoundingBoxRenderer.class);
+       // beanFactory.add("50.renderer5.wireframeDrawer", WireframeRenderer.class);
+        //beanFactory.add("50.renderer6.skeleton", SkeletonRenderer.class);
         //beanFactory.add("50.renderer7.shadowRenderer", ShadowRenderer.class);
 
     }
@@ -223,7 +223,7 @@ public class ModelEngine {
         fontFactory.setScreen((Screen) beanFactory.find(Screen.class));
         beanFactory.add("80.gui.font_factory", fontFactory);
         beanFactory.add("80.gui.default", GUIDefault.class);
-        beanFactory.add("80.gui.axis", Axis.class);
+        //beanFactory.add("80.gui.axis", Axis.class);
     }
 
 
