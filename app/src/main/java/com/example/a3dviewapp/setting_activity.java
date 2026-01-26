@@ -12,6 +12,9 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 public class setting_activity extends BaseActivity {
 
@@ -20,6 +23,11 @@ public class setting_activity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
 
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_setting), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
         // Main shape container click listener
         findViewById(R.id.containershape).setOnClickListener(v -> showModelListDialog());
 
@@ -29,7 +37,7 @@ public class setting_activity extends BaseActivity {
 
         ConstraintLayout btnShare = findViewById(R.id.containershare);
         ConstraintLayout btnRate = findViewById(R.id.containerrate);
-        ConstraintLayout btnPrivacy = findViewById(R.id.privacy);
+        ConstraintLayout btnPrivacy = findViewById(R.id.containerSort);
 
         btnShare.setOnClickListener(v -> {
             String shareMessage = "Check out this awesome app: https://play.google.com/store/apps/details?id=" + getPackageName();

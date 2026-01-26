@@ -3,6 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:layout_marginTop="10dp"
+    android:id="@+id/acticity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background">
@@ -21,31 +23,27 @@
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/black" />
 
-
     <ImageButton
         android:id="@+id/btnDownload"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_margin="16dp"
-        android:layout_marginTop="16dp"
         android:background="@drawable/back_button_background"
         android:contentDescription="Download"
         android:elevation="10dp"
         android:padding="8dp"
-
         android:src="@android:drawable/stat_sys_download"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.956"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/black" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/model_wrapper"
         android:layout_width="360dp"
+        android:padding="10dp"
+        android:layout_marginTop="20dp"
         android:layout_height="320dp"
         android:background="@drawable/model_background"
-        app:layout_constraintBottom_toBottomOf="@+id/header"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -59,18 +57,13 @@
                 android:id="@+id/fabZoomIn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/white"
                 android:visibility="gone"
-                app:fabSize="mini"
-
-                />
+                app:fabSize="mini" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fabZoomOut"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/white"
                 android:visibility="gone"
                 app:fabSize="mini" />
         </FrameLayout>
@@ -181,18 +174,8 @@
                     android:text="Girl"
                     android:textSize="10sp" />
             </LinearLayout>
-
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
@@ -201,21 +184,8 @@
         android:layout_height="wrap_content"
         android:background="#7B94E0"
         android:orientation="vertical"
-        android:padding="12dp"
+        android:padding="4dp"
         app:layout_constraintTop_toBottomOf="@id/model_wrapper">
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="20dp">
-            <EditText
-                android:id="@+id/searchBar"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:hint="Search clothes..."
-                android:paddingStart="16dp"
-                android:background="@null"/>
-        </androidx.cardview.widget.CardView>
     </LinearLayout>
 
     <LinearLayout
@@ -226,7 +196,6 @@
         android:gravity="center"
         android:padding="8dp"
         app:layout_constraintTop_toBottomOf="@id/header">
-
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipTShirts"
@@ -242,15 +211,12 @@
             android:text="Popular"
             android:layout_margin="4dp"/>
 
-
         <com.google.android.material.chip.Chip
             android:id="@+id/chipPants"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Latest"
-            android:background="@drawable/button_border_file"
             android:layout_margin="4dp"/>
-
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -266,7 +232,6 @@
         android:layout_height="wrap_content"
         android:visibility="gone"
         app:layout_constraintTop_toTopOf="parent"
-
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 

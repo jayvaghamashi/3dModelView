@@ -8,22 +8,34 @@
     android:background="@drawable/all_background"
     android:padding="8dp">
 
+
+    <ImageButton
+        android:id="@+id/btnclothBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/back_button_background"
+        android:src="@drawable/ic_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
     <!-- Title -->
+
+    <!-- T-shirts Card -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="16dp"
         android:gravity="center"
-        android:text="T-shirt"
+        android:text="Category"
         android:textColor="#000000"
         android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- T-shirts Card -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/containerTop"
         android:layout_width="0dp"

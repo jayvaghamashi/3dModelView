@@ -63,7 +63,7 @@ public class activity_fourquestion extends AppCompatActivity {
                     btnNext.setEnabled(true);
                     btnNext.setBackgroundTintList(getResources().getColorStateList(android.R.color.holo_blue_dark));
 
-                   // Toast.makeText(activity_fourquestion.this, selectedType + " selected", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity_fourquestion.this, selectedType + " selected", Toast.LENGTH_SHORT).show();
                 }
             });
         }

@@ -1,8 +1,10 @@
 package com.example.a3dviewapp;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -17,8 +19,11 @@ import java.util.List;
 
 public class activity_showcloth extends BaseActivity {
     private String category;
+
+    ImageView btnBack;
     private ConstraintLayout selectedContainer = null; // Home activity જેવું જ વેરીએબલ
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,12 +36,21 @@ public class activity_showcloth extends BaseActivity {
             return insets;
         });
 
+        btnBack =findViewById(R.id.btnclothBack);
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(activity_showcloth.this,activity_home.class));
+                finish();
+            }
+        });
+
         Intent intent = getIntent();
         category = intent.getStringExtra("CATEGORY");
         if (category == null) category = "tshirts";
 
         TextView tvTitle = findViewById(R.id.tvTitle);
-        tvTitle.setText(category);
+        //tvTitle.setText(category);
 
         List<ConstraintLayout> containers = Arrays.asList(
                 findViewById(R.id.containerTop),
@@ -45,9 +59,9 @@ public class activity_showcloth extends BaseActivity {
         );
 
         // ટેક્સ્ટ સેટ કરો
-        ((TextView) findViewById(R.id.tvTshirt)).setText(category + " Top");
-        ((TextView) findViewById(R.id.tvShirt)).setText("Popular " + category);
-        ((TextView) findViewById(R.id.tvPant)).setText("Latest " + category);
+        ((TextView) findViewById(R.id.tvTshirt)).setText(" Top"  );
+        ((TextView) findViewById(R.id.tvShirt)).setText("Popular " );
+        ((TextView) findViewById(R.id.tvPant)).setText("Latest " );
 
         for (int i = 0; i < containers.size(); i++) {
             final int index = i;

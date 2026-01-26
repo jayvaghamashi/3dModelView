@@ -9,7 +9,9 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -25,30 +27,26 @@ public class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Internet check karvanu chalu karo
+        // Internet check start
         registerNetworkMonitor();
     }
 
-    // --- SYSTEM BACK BUTTON LOGIC (Entire App mate) ---
+    // --- SYSTEM BACK BUTTON LOGIC ---
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         int keyCode = event.getKeyCode();
 
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // Jyare button dabavyu (Down)
             if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                 backPressedTime = System.currentTimeMillis();
                 return true;
             }
-            // Jyare button chhodyu (Up)
             else if (event.getAction() == KeyEvent.ACTION_UP) {
                 long pressDuration = System.currentTimeMillis() - backPressedTime;
 
                 if (pressDuration > 1000) {
-                    // 1. LONG PRESS (1 second thi vadhu) -> Show Exit Dialog
                     showAppExitDialog();
                 } else {
-                    // 2. SINGLE CLICK -> Normal Back (Finish Activity)
                     finish();
                 }
                 return true;
@@ -59,6 +57,8 @@ public class BaseActivity extends AppCompatActivity {
 
     // --- EXIT POPUP METHOD ---
     public void showAppExitDialog() {
+        if (isFinishing() || isDestroyed()) return;
+
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_exit);
         if (dialog.getWindow() != null) {
@@ -71,17 +71,24 @@ public class BaseActivity extends AppCompatActivity {
 
         btnYes.setOnClickListener(v -> {
             dialog.dismiss();
-            finishAffinity(); // Full App Exit
+            finishAffinity();
             System.exit(0);
         });
 
         btnNo.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
+
+        try {
+            dialog.show();
+        } catch (WindowManager.BadTokenException e) {
+            Log.e("BaseActivity", "Error showing exit dialog: " + e.getMessage());
+        }
     }
 
     // --- NETWORK MONITOR LOGIC ---
     private void registerNetworkMonitor() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return;
+
         NetworkRequest request = new NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build();
 
@@ -103,6 +110,9 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     private void showNoInternetDialog() {
+        // --- SAFETY CHECK: Activity run thai rahi che ke nahi? ---
+        if (isFinishing() || isDestroyed()) return;
+
         if (internetDialog != null && internetDialog.isShowing()) return;
 
         internetDialog = new Dialog(this);
@@ -121,12 +131,29 @@ public class BaseActivity extends AppCompatActivity {
             }
         });
 
-        internetDialog.show();
+        // --- SAFETY CHECK: BadTokenException rokva mate ---
+        try {
+            internetDialog.show();
+        } catch (WindowManager.BadTokenException e) {
+            Log.e("BaseActivity", "Window token is invalid. Skipping dialog show.");
+        }
     }
 
     private boolean isNetworkAvailable() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkCapabilities caps = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        if (cm == null) return false;
+        Network activeNetwork = cm.getActiveNetwork();
+        if (activeNetwork == null) return false;
+        NetworkCapabilities caps = cm.getNetworkCapabilities(activeNetwork);
         return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+    }
+
+    @Override
+    protected void onDestroy() {
+        // Activity destroy thai tyare dialog dismiss karvo jaruri che
+        if (internetDialog != null && internetDialog.isShowing()) {
+            internetDialog.dismiss();
+        }
+        super.onDestroy();
     }
 }

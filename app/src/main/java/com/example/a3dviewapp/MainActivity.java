@@ -1,36 +1,30 @@
 package com.example.a3dviewapp;
 
 import android.app.Dialog;
-import android.content.Context;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.provider.MediaStore;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -45,7 +39,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
-// Engine Imports
 import org.the3deer.android_3d_model_engine.ModelEngine;
 import org.the3deer.android_3d_model_engine.ModelFragment;
 import org.the3deer.android_3d_model_engine.ModelViewModel;
@@ -55,6 +48,9 @@ import org.the3deer.android_3d_model_engine.model.Object3DData;
 import org.the3deer.android_3d_model_engine.model.Scene;
 import org.the3deer.android_3d_model_engine.model.Texture;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,28 +59,25 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends BaseActivity {
-    private String lastAppliedTextureUrl = "";
-    private AlertDialog internetDialog;
+
     private ModelViewModel modelViewModel;
-    private ImageView btnGirl, btnMan, btnRounded, btnRoblox ,btnback;
+    private ImageView btnGirl, btnMan, btnRounded, btnRoblox, btnback;
     private FloatingActionButton fabZoomIn, fabZoomOut;
     private Chip chipTShirts, chipShirts, chipPants;
     private RecyclerView productsRecyclerView;
     private ProgressBar progressBar;
-    private EditText searchBar;
-
     private ProductAdapter adapter;
+
+    private String imageUrl = "";
+    private String currentCategory = "tshirts";
     private List<Product> allProducts = new ArrayList<>();
     private List<Product> filteredProducts = new ArrayList<>();
 
     private Target textureTarget;
-
-    // Track category to decide mapping logic
-    private String currentCategory = "tshirts";
+    private Target downloadTarget;
 
     private boolean doubleBackToExitPressedOnce = false;
 
-    // --- MAPPING ENUMS ---
     public enum Part { BODY, LEFT_ARM, RIGHT_ARM, LEFT_LEG, RIGHT_LEG }
     public enum Side { FRONT, BACK, LEFT, RIGHT, UP, DOWN }
 
@@ -93,139 +86,54 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        // --- Have aa Callback add karo (Double Tap logic sathe) ---
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-
-            @Override
-            public void handleOnBackPressed() {
-
-                if (doubleBackToExitPressedOnce) {
-                    showExitDialog(); // second tap → dialog
-                    return;
-                }
-
-                // first tap
-                doubleBackToExitPressedOnce = true;
-                //startActivity(new Intent(MainActivity.this,activity_showcloth.class));
-                Toast.makeText(MainActivity.this,
-                        "Please click BACK again to exit",
-                        Toast.LENGTH_SHORT).show();
-
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    doubleBackToExitPressedOnce = false;
-                }, 2000);
-            }
-        });
-
+        View mainLayout = findViewById(R.id.acticity_main);
+        if (mainLayout != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(mainLayout, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
+        }
 
         modelViewModel = new ViewModelProvider(this).get(ModelViewModel.class);
-        //showExitDialog();
-        //registerNetworkCallback();
+
         initializeUI();
         setupRecyclerView();
         setupClickListeners();
-        setupSearch();
-        btnback = findViewById(R.id.btnBack);
-        btnback.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                startActivity(new Intent(MainActivity.this,activity_showcloth.class));
-            }
-        });
-
 
         ImageButton btnDownload = findViewById(R.id.btnDownload);
         btnDownload.setOnClickListener(v -> {
-            if (!lastAppliedTextureUrl.isEmpty()) {
-                Intent intent = new Intent(MainActivity.this, activity_share.class);
-                intent.putExtra("IMAGE_URL", lastAppliedTextureUrl); // Texture URL pass karo
-                startActivity(intent);
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                startDownloadSequence();
             } else {
-                Toast.makeText(this, "Please select a cloth first!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Please select a cloth design first!", Toast.LENGTH_SHORT).show();
             }
         });
+
         String defaultModel = getSharedPreferences("ModelPrefs", MODE_PRIVATE)
                 .getString("default_model", "models/man.dae");
         update3DView(defaultModel);
 
         String categoryFromIntent = getIntent().getStringExtra("CATEGORY");
-        if (categoryFromIntent != null) {
-            currentCategory = categoryFromIntent;
-        } else {
-            currentCategory = "tshirts"; // default
-        }
+        currentCategory = (categoryFromIntent != null) ? categoryFromIntent : "tshirts";
         fetchProducts(currentCategory);
-        //fetchProducts("tshirts");
-    }
 
-    private void registerNetworkCallback() {
-        try {
-            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkRequest networkRequest = new NetworkRequest.Builder()
-                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                    .build();
+        btnback = findViewById(R.id.btnBack);
+        btnback.setOnClickListener(v -> finish());
 
-            connectivityManager.registerNetworkCallback(networkRequest, new ConnectivityManager.NetworkCallback() {
-                @Override
-                public void onAvailable(@NonNull Network network) {
-                    // Jyare internet pachu ave tyare popup bandh kari dyo
-                    runOnUiThread(() -> {
-                        if (internetDialog != null && internetDialog.isShowing()) {
-                            internetDialog.dismiss();
-                        }
-                    });
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (doubleBackToExitPressedOnce) {
+                    showExitDialog();
+                    return;
                 }
-
-                @Override
-                public void onLost(@NonNull Network network) {
-                    // Jyare internet jay tyare popup batavo
-                    runOnUiThread(() -> showNoInternetDialog());
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void showNoInternetDialog() {
-        if (internetDialog != null && internetDialog.isShowing()) return;
-
-        internetDialog = new AlertDialog.Builder(MainActivity.this)
-                .setTitle("No Internet Connection")
-                .setMessage("Please check your internet settings and try again.")
-                .setCancelable(false) // User dialog bandh na kari shake jya sudhi net na ave
-                .setPositiveButton("Settings", (dialog, which) -> {
-                    startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
-                })
-                .create();
-        internetDialog.show();
-    }
-    private void showExitDialog() {
-
-        Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_exit);
-        dialog.setCancelable(false);
-
-        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-
-        Button btnYes = dialog.findViewById(R.id.btnYes);
-        Button btnNo = dialog.findViewById(R.id.btnNo);
-        ImageView btnBack = dialog.findViewById(R.id.btnBack);
-
-        btnYes.setOnClickListener(v -> {
-            dialog.dismiss();
-            finishAffinity(); // FULL APP EXIT
+                doubleBackToExitPressedOnce = true;
+                Toast.makeText(MainActivity.this, "Press again to exit", Toast.LENGTH_SHORT).show();
+                new Handler(Looper.getMainLooper()).postDelayed(() -> doubleBackToExitPressedOnce = false, 2000);
+            }
         });
-
-        btnNo.setOnClickListener(v -> dialog.dismiss());
-
-        btnBack.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
     }
-
 
     private void initializeUI() {
         btnGirl = findViewById(R.id.btnGirl);
@@ -239,137 +147,114 @@ public class MainActivity extends BaseActivity {
         chipPants = findViewById(R.id.chipPants);
         productsRecyclerView = findViewById(R.id.productsRecyclerView);
         progressBar = findViewById(R.id.progressBar);
-        searchBar = findViewById(R.id.searchBar);
     }
 
-
-    private void update3DView(String modelPath) {
-        if (modelViewModel != null) {
-            modelViewModel.setModelEngine(null);
-        }
-
-        String uri = "android://com.example.a3dviewapp/assets/" + modelPath;
-        ModelFragment fragment = ModelFragment.newInstance(uri, null, false);
-
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.model_container, fragment)
-                .commit();
-
-        getSupportFragmentManager().executePendingTransactions();
-
-        Fragment f = getSupportFragmentManager().findFragmentById(R.id.model_container);
-        if (f instanceof ModelFragment) {
-            ((ModelFragment) f).setBackEnabled(false);
-        }
-
-
-        new Handler(Looper.getMainLooper()).postDelayed(() -> fixModelVisuals(), 1500);
+    private void setupRecyclerView() {
+        productsRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        adapter = new ProductAdapter(this, filteredProducts, product -> {
+            imageUrl = product.getActualImageUrl();
+            applyTextureToModel(imageUrl);
+        });
+        productsRecyclerView.setAdapter(adapter);
     }
 
-    private void fixModelVisuals() {
-        ModelEngine engine = modelViewModel.getModelEngine().getValue();
-        if (engine == null) return;
-
-        engine.setBackgroundColor(new float[]{0.0f, 0.0f, 0.0f, 0.0f});
-
-        Scene scene = engine.getBeanFactory().find(Scene.class);
-        if (scene == null) return;
-
-        scene.setLightProfile(Scene.LightProfile.PointOfView);
-
-        if (!scene.getObjects().isEmpty()) {
-            Object3DData model = scene.getObjects().get(0);
-            model.setChanged(true);
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // TEXTURE APPLICATION
-    // -------------------------------------------------------------------------
-
-    private void applyTextureToModel(String textureUrl) {
-        this.lastAppliedTextureUrl = textureUrl; // Aa line add karo
-        ModelEngine engine = modelViewModel.getModelEngine().getValue();
-        if (engine == null) {
-            Toast.makeText(this, "Please wait, model loading...", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Toast.makeText(this, "Applying " + currentCategory + "...", Toast.LENGTH_SHORT).show();
-
-        textureTarget = new Target() {
+    private void startDownloadSequence() {
+        Toast.makeText(this, "Downloading for Share...", Toast.LENGTH_SHORT).show();
+        downloadTarget = new Target() {
             @Override
-            public void onBitmapLoaded(Bitmap downloadedBitmap, Picasso.LoadedFrom from) {
-                try {
-                    Bitmap processedBitmap;
-
-                    if (currentCategory.equals("tshirts")) {
-                        // T-Shirts: Chest Decal Only
-                        processedBitmap = processTShirtTexture(downloadedBitmap);
-                    } else {
-                        // Shirts & Pants: Template Logic
-                        processedBitmap = processRobloxTemplate(downloadedBitmap);
-                    }
-
-                    Scene scene = engine.getBeanFactory().find(Scene.class);
-                    if (scene != null && !scene.getObjects().isEmpty()) {
-                        Object3DData model = scene.getObjects().get(0);
-
-                        Texture newTexture = new Texture();
-                        newTexture.setBitmap(processedBitmap);
-
-                        if (model.getElements() != null) {
-                            for (Element e : model.getElements()) {
-                                if (e.getId().equalsIgnoreCase("geometry1")) {
-                                    if (e.getMaterial() != null) {
-                                        e.getMaterial().setColorTexture(newTexture);
-                                    }
-                                }
-                            }
-                        }
-
-                        model.setChanged(true);
-                        Toast.makeText(MainActivity.this, "Applied!", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                saveImageToGallery(bitmap);
+                Intent intent = new Intent(MainActivity.this, activity_share.class);
+                intent.putExtra("IMAGE_URL", imageUrl);
+                startActivity(intent);
+                downloadTarget = null;
             }
 
             @Override
             public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                Toast.makeText(MainActivity.this, "Download Failed", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Failed to download", Toast.LENGTH_SHORT).show();
+                downloadTarget = null;
             }
 
             @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) { }
+            public void onPrepareLoad(Drawable placeHolderDrawable) {}
         };
+        Picasso.get().load(imageUrl).into(downloadTarget);
+    }
 
+    private void saveImageToGallery(Bitmap bitmap) {
+        String filename = "Design_" + System.currentTimeMillis() + ".png";
+        try {
+            OutputStream fos;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
+                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/3DViewApp");
+                Uri imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+                fos = getContentResolver().openOutputStream(imageUri);
+            } else {
+                File imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                File image = new File(imagesDir, filename);
+                fos = new FileOutputStream(image);
+            }
+
+            if (fos != null) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.close();
+                Toast.makeText(this, "Saved to Gallery!", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void applyTextureToModel(String textureUrl) {
+        ModelEngine engine = modelViewModel.getModelEngine().getValue();
+        if (engine == null) return;
+
+        textureTarget = new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap downloadedBitmap, Picasso.LoadedFrom from) {
+                Bitmap processed = currentCategory.equals("tshirts") ?
+                        processTShirtTexture(downloadedBitmap) : processRobloxTemplate(downloadedBitmap);
+
+                Scene scene = engine.getBeanFactory().find(Scene.class);
+                if (scene != null && !scene.getObjects().isEmpty()) {
+                    Object3DData model = scene.getObjects().get(0);
+                    Texture newTexture = new Texture();
+                    newTexture.setBitmap(processed);
+
+                    if (model.getElements() != null) {
+                        for (Element e : model.getElements()) {
+                            if (e.getId().equalsIgnoreCase("geometry1")) {
+                                if (e.getMaterial() != null) e.getMaterial().setColorTexture(newTexture);
+                            }
+                        }
+                    }
+                    model.setChanged(true);
+                }
+                textureTarget = null;
+            }
+
+            @Override
+            public void onBitmapFailed(Exception e, Drawable errorDrawable) { textureTarget = null; }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {}
+        };
         Picasso.get().load(textureUrl).into(textureTarget);
     }
 
-    // -------------------------------------------------------------------------
-    // LOGIC 1: T-SHIRTS (Single Image -> Chest Only)
-    // -------------------------------------------------------------------------
-    private Bitmap processTShirtTexture(Bitmap sourceBitmap) {
+    private Bitmap processTShirtTexture(Bitmap source) {
         Bitmap finalTexture = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(finalTexture);
         canvas.drawColor(Color.WHITE);
-
-        // Chest Area
-        Rect chestRect = new Rect(0, 72, 132, 204);
-
-        if (sourceBitmap != null) {
-            canvas.drawBitmap(sourceBitmap, null, chestRect, null);
-        }
-
+        canvas.drawBitmap(source, null, new Rect(0, 72, 132, 204), null);
         return finalTexture;
     }
 
-    // -------------------------------------------------------------------------
-    // LOGIC 2: SHIRTS & PANTS (Fix Applied Here!)
-    // -------------------------------------------------------------------------
-    private Bitmap processRobloxTemplate(Bitmap sourceBitmap) {
+    private Bitmap processRobloxTemplate(Bitmap source) {
         Bitmap finalTexture = Bitmap.createBitmap(1024, 1024, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(finalTexture);
         canvas.drawColor(Color.WHITE);
@@ -378,24 +263,18 @@ public class MainActivity extends BaseActivity {
         Side[] sides = Side.values();
         Part[] parts;
 
-        // [FIX] અહીં આપણે નક્કી કરીએ છીએ કે શું પહેરાવવું છે
         if (currentCategory.equals("pants")) {
-            // જો PANTS હોય: તો માત્ર બોડી અને પગ (Arms નહીં)
             parts = new Part[]{Part.BODY, Part.LEFT_LEG, Part.RIGHT_LEG};
         } else {
-            // જો SHIRTS હોય: તો માત્ર બોડી અને હાથ (Legs નહીં)
-            // આનાથી શર્ટનું કપડું પગ પર કે બીજી જગ્યાએ નહીં જાય
             parts = new Part[]{Part.BODY, Part.LEFT_ARM, Part.RIGHT_ARM};
         }
 
         for (Part part : parts) {
             for (Side side : sides) {
-                Rect srcRect = getSourceRect(part, side, scale);
-                Rect dstRect = getDestRect(part, side, scale);
-
-                // Check works to avoid crashes
-                if (srcRect.width() > 0 && dstRect.width() > 0) {
-                    drawPart(canvas, sourceBitmap, srcRect, dstRect);
+                Rect src = getSourceRect(part, side, scale);
+                Rect dst = getDestRect(part, side, scale);
+                if (src.width() > 0 && dst.width() > 0) {
+                    drawPart(canvas, source, src, dst);
                 }
             }
         }
@@ -404,14 +283,11 @@ public class MainActivity extends BaseActivity {
 
     private void drawPart(Canvas canvas, Bitmap source, Rect src, Rect dst) {
         try {
-            if (src.left >= 0 && src.top >= 0 && src.right <= source.getWidth() && src.bottom <= source.getHeight()) {
-                Bitmap piece = Bitmap.createBitmap(source, src.left, src.top, src.width(), src.height());
-                canvas.drawBitmap(piece, null, dst, null);
-            }
+            Bitmap piece = Bitmap.createBitmap(source, src.left, src.top, src.width(), src.height());
+            canvas.drawBitmap(piece, null, dst, null);
         } catch (Exception e) {}
     }
 
-    // --- COORDINATES ---
     private Rect getSourceRect(Part part, Side side, int i) {
         if (part == Part.BODY) {
             if (side == Side.FRONT) return new Rect(i * 229, i * 72, i * 229 + (i * 132), i * 72 + (i * 132));
@@ -484,44 +360,33 @@ public class MainActivity extends BaseActivity {
         return new Rect(0, 0, 0, 0);
     }
 
+    private void update3DView(String modelPath) {
+        if (modelViewModel != null) modelViewModel.setModelEngine(null);
+        String uri = "android://com.example.a3dviewapp/assets/" + modelPath;
+        ModelFragment fragment = ModelFragment.newInstance(uri, null, false);
+        getSupportFragmentManager().beginTransaction().replace(R.id.model_container, fragment).commit();
+    }
+
     private void setupClickListeners() {
         btnGirl.setOnClickListener(v -> update3DView("models/girl.dae"));
         btnMan.setOnClickListener(v -> update3DView("models/man.dae"));
         btnRounded.setOnClickListener(v -> update3DView("models/rounded.dae"));
         btnRoblox.setOnClickListener(v -> update3DView("models/roblox.dae"));
-
         fabZoomIn.setOnClickListener(v -> {
             ModelEngine e = modelViewModel.getModelEngine().getValue();
             if (e != null) e.getBeanFactory().find(CameraController.class).move(0, 0, -10f);
         });
-
         fabZoomOut.setOnClickListener(v -> {
             ModelEngine e = modelViewModel.getModelEngine().getValue();
             if (e != null) e.getBeanFactory().find(CameraController.class).move(0, 0, 10f);
         });
-
-        chipTShirts.setOnClickListener(v -> fetchProducts(currentCategory));
-        chipShirts.setOnClickListener(v -> fetchProducts(currentCategory));
-        chipPants.setOnClickListener(v -> fetchProducts(currentCategory));
-    }
-
-    private void setupRecyclerView() {
-        productsRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        adapter = new ProductAdapter(this, filteredProducts, new ProductAdapter.OnProductClickListener() {
-            @Override
-            public void onProductClick(Product product) {
-                applyTextureToModel(product.getActualImageUrl());
-            }
-
-
-        });
-        productsRecyclerView.setAdapter(adapter);
+        chipTShirts.setOnClickListener(v -> fetchProducts("tshirts"));
+        chipShirts.setOnClickListener(v -> fetchProducts("shirts"));
+        chipPants.setOnClickListener(v -> fetchProducts("pants"));
     }
 
     private void fetchProducts(String category) {
-        // [IMPORTANT] કેટેગરી અપડેટ કરવી જરૂરી છે જેથી આપણે નક્કી કરી શકીએ કે કઈ લોજિક વાપરવી
         this.currentCategory = category;
-
         progressBar.setVisibility(View.VISIBLE);
         ApiClient.ProductRequest request = new ApiClient.ProductRequest(category, "1", "28");
         ApiClient.getClient().create(ApiClient.ApiInterface.class).getProducts(request).enqueue(new Callback<ApiResponse>() {
@@ -535,28 +400,51 @@ public class MainActivity extends BaseActivity {
                     adapter.updateData(filteredProducts);
                 }
             }
-
             @Override
-            public void onFailure(Call<ApiResponse> call, Throwable t) {
-                progressBar.setVisibility(View.GONE);
-            }
+            public void onFailure(Call<ApiResponse> call, Throwable t) { progressBar.setVisibility(View.GONE); }
         });
     }
 
-    private void setupSearch() {
-        searchBar.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) {
-                filteredProducts.clear();
-                for (Product p : allProducts) {
-                    if (p.getTitle().toLowerCase().contains(s.toString().toLowerCase()))
-                        filteredProducts.add(p);
+    private void showExitDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_exit);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.findViewById(R.id.btnYes).setOnClickListener(v -> finishAffinity());
+        dialog.findViewById(R.id.btnNo).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // 3D View ને સુરક્ષિત રીતે Pause કરવા માટે
+        android.opengl.GLSurfaceView glView = findGLSurfaceView();
+        if (glView != null) {
+            glView.onPause();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 3D View ને સુરક્ષિત રીતે Resume કરવા માટે
+        android.opengl.GLSurfaceView glView = findGLSurfaceView();
+        if (glView != null) {
+            glView.onResume();
+        }
+    }
+
+    // આ મેથડ તમારા Fragment માંથી GLSurfaceView શોધી આપશે
+    private android.opengl.GLSurfaceView findGLSurfaceView() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.model_container);
+        if (fragment != null && fragment.getView() instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) fragment.getView();
+            for (int i = 0; i < group.getChildCount(); i++) {
+                if (group.getChildAt(i) instanceof android.opengl.GLSurfaceView) {
+                    return (android.opengl.GLSurfaceView) group.getChildAt(i);
                 }
-                adapter.updateData(filteredProducts);
             }
-        });
-
-
+        }
+        return null;
     }
-}
+    }

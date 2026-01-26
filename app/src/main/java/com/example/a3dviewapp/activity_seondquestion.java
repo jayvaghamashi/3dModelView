@@ -65,7 +65,7 @@ public class activity_seondquestion extends AppCompatActivity {
                     btnNext.setEnabled(true);
                     btnNext.setBackgroundTintList(getResources().getColorStateList(android.R.color.holo_blue_dark));
 
-                   // Toast.makeText(activity_seondquestion.this, selectedType + " selected", Toast.LENGTH_SHORT).show();
+                   Toast.makeText(activity_seondquestion.this, selectedType + " selected", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -81,7 +81,7 @@ public class activity_seondquestion extends AppCompatActivity {
                     startActivity(intent);
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                 } else {
-                    //Toast.makeText(activity_seondquestion.this, "Please select an option first", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity_seondquestion.this, "Please select an option first", Toast.LENGTH_SHORT).show();
                 }
             }
         });

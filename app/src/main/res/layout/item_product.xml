@@ -7,8 +7,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="190dp"
-        android:layout_height="160dp"
+        android:layout_width="170dp"
+        android:layout_height="150dp"
         android:background="@drawable/clothbackground"
         android:padding="8dp">
 
